@@ -1,0 +1,22 @@
+data_directory: "data_dst"
+
+echo:
+    #serial_number: "27D2EA9E53544C324E202020FF18483D"
+    serial_number: "A597C94353544C324E202020FF18412B"
+    page_size: 2048
+    baud: 128000
+
+force:
+    serial_number: "A597C94353544C324E202020FF18412B"
+    page_size: 2048
+    baud: 9600
+
+motor_pantilt:
+    serial_number: "13613280"
+    
+motor_right:
+    serial_number: "13615010"
+    
+motor_left:
+    serial_number: "13613200"
+    
