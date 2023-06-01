@@ -39,7 +39,7 @@ The amp board should be recieving power from the 24v regulator, and when the scr
 For reference, a linear chirp is defined as the function:
 
 ```math
-x(t) = e^{j(\Delta \Omega + \cfrac{\Delta \Omega}{2T} \cdot t^{2}}
+x(t) = e^{j\left(\Delta \Omega + \cfrac{\Delta \Omega}{2T} \cdot t^{2}\right)}
 ```
 
 In discrete time, for $`k=\Delta Omega`$ and $`t = f[n]`$:
