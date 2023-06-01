@@ -42,7 +42,7 @@ For reference, a linear chirp is defined as the function:
 x(t) = e^{j\left(\Delta \Omega\,t + \cfrac{\Delta \Omega}{2T}\, t^{2} + \phi\right)}
 ```
 
-In discrete time, for $`k=\Delta \Omega`$ and $`t = f[n]`$, taking $`\fraktur{R}\{x(t)\}`$:
+In discrete time, for $`k=\Delta \Omega`$ and $`t = f[n]`$, taking the real part of $`x(t)`$:
 
 ```math
 x[n] = \cos\left(k f[n] + \cfrac{kf^{2}[n]}{2} + \phi\right)
