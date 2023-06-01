@@ -36,10 +36,16 @@ If you do not see some slanted lines on the spectrograms (these are the chirps),
 
 The amp board should be recieving power from the 24v regulator, and when the script is running, the green enable LED on the amp board shuld be lit up. You can also listen for some faint clicking coming from the transducers. This indicates that the chirps are being amplified and sent out through the wvaeguide. 
 
-For reference, we use the following for creating a chirp:
+For reference, a linear chirp is defined as the function:
 
 ```math
-x[n] = \cos\left(\omega_{0}f[n] + \cfrac{kf^{2}[n]}{2} + \phi\right)
+x(t) = e^{j(\Delta \Omega + \cfrac{\Delta \Omega}{2T} \cdot t^{2}}
+```
+
+In discrete time, for $`k=\Delta Omega`$ and $`t = f[n]`$:
+
+```math
+x[n] = \cos\left(k f[n] + \cfrac{kf^{2}[n]}{2} + \phi\right)
  ```
 
 ```math 
