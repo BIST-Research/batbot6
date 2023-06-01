@@ -19,8 +19,7 @@ git config credential.helper store
 
 Which should allow you to execute git commands normally without explicitly providing your access token
 
-==========================================================================================================================================
-
+=======================================================================================================
 ## Basic Usage
 
 ```python3.8 bb_ctrl.py 200```
