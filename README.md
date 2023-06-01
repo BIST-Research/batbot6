@@ -37,7 +37,7 @@ The amp board should be recieving power from the 24v regulator, and when the scr
 
 ## Basic theory
 
-A linear chirp is defined by the function:
+A [linear chirp](https://en.wikipedia.org/wiki/Chirp_spectrum) is defined by the function:
 
 ```math
 x(t) = e^{j\left(\Delta \Omega\,t + \cfrac{\Delta \Omega}{2T}\, t^{2} + \phi\right)}
