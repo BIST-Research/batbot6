@@ -48,7 +48,7 @@ Where $`\omega_{0}`$ and $`\omega_{1}`$ are the initial and final frequencies re
 A Han window is used to attenuate harmonics outside of the scope of interest:
 
 ```math
-w[n] = sin^{2}\, \omega n 
+w[n] = \sin^{2}\, \omega n 
 ```
 
 So, other than some linear scaling and biasing to produce integers within the capabilities of the DAC, the output chirp is:
