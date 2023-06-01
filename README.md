@@ -36,5 +36,27 @@ If a matplot window appears, then the BatBot is recieving data from the microcon
 For reference, we use the following for creating a chirp:
 
 ```math
-x[n] = \cos\left(\omega \cfrac{\omega t_{1} n}{N}\right)
+x[n] = \cos\left(\omega_{0}f[n] + \cfrac{kf^{2}[n]}{2} + \phi\right)
  ```
+
+```math 
+f[n] = \cfrac{nT}{N} \qquad k = \cfrac{\omega_{1} - \omega_{0}}{T}
+```
+
+Where $`\omega_{0}`$ and $`\omega_{1}`$ are the initial and final frequencies respectively. The rest of this function follows typical notation for time/spatially varying waves. 
+
+A Han window is used to attenuate harmonics outside of the scope of interest:
+
+```math
+w[n] = sin^{2}\, \omega n 
+```
+
+So, other than some linear scaling and biasing to produce integers within the capabilities of the DAC, the output chirp is:
+
+```math
+y[n] = x[n]w[n]
+```
+
+
+
+ 
