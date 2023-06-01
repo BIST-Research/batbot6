@@ -8,7 +8,7 @@ NOTE: Since this is a private repository, to have git privileges, you must gener
 Use the following to clone the repository for the first time:
 
 ```
-git https://{your-access-key}@github.com/BIST-Research/batbot6
+git clone https://{your-access-key}@github.com/BIST-Research/batbot6
 ```
 
 After which (on a machine you trust), you can do
