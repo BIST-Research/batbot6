@@ -30,7 +30,11 @@ Will execute 200 chirp and listen operations. Each execution of bb_ctrl creates 
 
 First, if you encouter an error about not being able to find device with serial number xyz, then make sure that the associated microcontrollers are connected (via USB at the moment) and have power (green LED is on). If it is both connected and on, unplug the microcontroller, plug it back in and press the reset button in the middle of the board and run the script again. 
 
-If a matplot window appears, then the BatBot is recieving data from the microcontroller. If you do not see some slanted lines on the spectrograms (these are the chirps), then it is likely that the main sonar amplification board is not recieving power. 
+If a matplot window appears, then the BatBot is recieving data from the microcontroller. 
+
+If you do not see some slanted lines on the spectrograms (these are the chirps), then it is likely that the main sonar amplification board is not recieving power. 
+
+The amp board should be recieving power from the 24v regulator, and when the script is running, the green enable LED on the amp board shuld be lit up. You can also listen for some faint clicking coming from the transducers. This indicates that the chirps are being amplified and sent out through the wvaeguide. 
 
 For reference, we use the following for creating a chirp:
 
