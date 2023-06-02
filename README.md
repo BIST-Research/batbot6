@@ -67,6 +67,9 @@ So, other than some linear scaling and biasing to produce integers within the ca
 y[n] = x[n]w[n]
 ```
 
+Danny was here
+
+
 
 
  
