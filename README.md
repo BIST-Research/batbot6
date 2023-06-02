@@ -68,24 +68,24 @@ y[n] = x[n]w[n]
 ```
 
 
-### System Overview
+# System Overview
 
-# Jetson Nano
+### Jetson Nano
 The Jetson Nano is a mini-computer with connections to attach peripherials (mouse, monitor, keyboard, etc.) Similar to a raspberry pi, but with greater computing power because it uses a GPU (graphics processing unit). You can use a Jetson as a regular computer, it runs on the Ubuntu operating system, and is considered an embedded computing device. It serves as the 'brains' of the batbot and houses all the scripts that are executed.  
 
-# Power Distribution Board
+### Power Distribution Board
 This board is the center power distribution center. You plug a LiPo battery into this board, and it provides the correct amount of power to each subsystem (jetson, transducers, etc.)
 
-# Transducers
+### Transducers
 The transducers are what send out the ultrasonic (?) sound. Transducers are essentially fancy speakers.
 
-# Microphones 
+### Microphones 
 for recording the ultrasonic sounds???
 
-# Microcontrollers
+### Microcontrollers
 There are several microcontrollers (MCU) on the batbot. MCUs are used to control the transducers are other computers. The jetson can send commands to the MCUs very serial connection (USB) but cannot push new code to the MCUs (limitations to building the arduino IDE on the jetson). 
 
-### Powering Up the System
+# Powering Up the System
 
 There are two ways to power up the system, and they are NOT equal. 
 1. Using a LiPo battery. A fully charged LiPo connects to a power distribution board, which then sends power to all the sub-systems in the bat bot
@@ -94,13 +94,13 @@ There are two ways to power up the system, and they are NOT equal.
 	- A green LED indicator on the opposite side of the Jetson board from the power jack should turn on if it has power
 	- if you want to power the Jetson via USB-C cable, you need to remove the tiny little jumper cable next to the barrel connector 
 
-# LiPo Batteries
+### LiPo Batteries
 
 Regarding LiPo batteries, the power distribution board can handle 18-36V, and 18V should really be the lowest allowable voltage for everything to operate. LiPo's also have weird rating conventions... but for a 4S (4 cell) LiPo, you can expect the minimum voltage to be 12V, nominal voltage to be 14.8V (what it's rated to), storage voltage to be 15.2V, and max voltage to be 16.8V. Yes, that means you would charge a 14.8V battery to 16.8V to use it.
 
 Generalizing, each cell (S) of a lipo has a nominal voltage of 3.7V, min voltage of 3V and max voltage of 4.2V.  
 
-# SSH Instructions
+### SSH Instructions
 
 New to SSH? Bascially, SSH allows you to access another computer's command line, so you can control it. To do SSH, you need to have a connection (either physically w/ an ethernet cable, or through a Wi-Fi router with both devices connected to the same network). 
 
@@ -117,9 +117,9 @@ If you want to SSH AND view graphics, you need to get a VNC client. VNC = virtua
 6. minimize that window, and now you can use the VNC for graphics by SSH'ing in again 
 TO DO: BEN UPDATE THIS ???
 
-### Code Overview
+# Code Overview
 
-# Scripts 
+### Scripts 
 bb_ctrl.py --> main script, it pulls in the configurations in bb_conf.yaml and uses m4.py to create MCU objects. The output is .bin (binary files) that can be used in post-processing
 
 m4.py --> object used to instantiate a MCU object (for our microcontrollers!)
@@ -130,7 +130,7 @@ bb_conf.yaml --> configs for each microcontroller
 	- page size is how much 
 	- m4.py uses the values contained within this script
 
-# Running
+### Running
 
 1. open up a terminal within the jetson (you should already be SSH'd in) [ctrl+alt+t]
 2. run ```python3.8 bb_ctrl.py```
@@ -139,7 +139,7 @@ bb_conf.yaml --> configs for each microcontroller
 	- with an argument, such as ```python3.8 bb_ctrl.py 500```, it runs for 500 chirps then stops (500 chirps takes about 2 minutes).
 3. the binary data (outputs) will be saved into a data_dst file for each time you run the bb_ctrl.py script
 
-# Is it working?
+###  Is it working?
 
 What to look for to ensure things are operational:
 1. green LED on the amplifier board w/ fan should be lit up 
@@ -147,5 +147,5 @@ What to look for to ensure things are operational:
 3. when you boot up the program, you should see visuals on the jetson's desktop (if you aren't using graphics fowarding, you won't see this obviously). It should show the raw time waveform (that gets saved to binary files) and then a live spectrogram as well.
 
 
-### Post Processing
+# Post Processing
 TBD. Contact Ibrahim and Adam.
