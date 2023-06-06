@@ -149,3 +149,66 @@ What to look for to ensure things are operational:
 
 # Post Processing
 TBD. Contact Ibrahim and Adam.
+
+# Use Guide for GPS-RTK2 ZED-F9P
+
+## Steps for setting up U-Center on Computer
+Follow these steps in order to download the proper software
+	- following this link:https://www.u-blox.com/en/product/u-center to the u-center website
+	- Download u-center 2, v23.03.54868 (for M10 and and F10T products only
+	- Download u-center, v22.07 (for F9/M9 products)
+	- Note: You will use both softwards for the GPS system 
+
+## Steps for Connecting RTK2-GPS to Computer
+
+Ensure you have all of these materials
+	- SparkFun GPS-RTK2 Board - ZED-F9P
+	- USB A --> USB C cord
+	- GNSS Multi-Band Magnetic Mount Antenna - 5m (SMA)
+	- Interface Cable SMA to U.FL
+	- Grounding plate for Magnetic Antenna
+	- Tripod
+
+1. Connect The Antenna Mount to the Magnetic Grounding Plate
+2. Attach the Antenna and Grounding plate to the Tripod
+3. Connect U.Fl to SMA cable to the RTK2 GPS board
+	- the port will be labeled "Active L1/L2 Antenna"
+4. Connect the SMA Cables bewteen the Antenna and the U.FL Interface Cable
+5. Use the USB A --> USB C cable to connect the RTK2 board to your computer
+6. Open u-center 2 and navigate to "Devices"
+	- click "Add Device" and select which ever COM port appears
+	- you can keep automatic autobauding or select your own
+		- Note 9,600 is good for initial tests/debuggin but 38,400 works well
+
+# Navigating u-center 2
+
+u-center 2 has two default tabs (Consoles and Views)
+
+Consoles shows 2 tabs:
+	- shows message views in both packet and binary
+Views shows 4 tabs
+	- Satellite Position View 
+	- Satellite Signal View 
+	- Map View
+	- Data View
+
+On the top bar there are three commands: Play log, Record log, Convert log
+
+Play log is used to replay recorded logs
+Record log is used to record data gathered by the RTK2 GPS
+Convert log is used to convert the data from .ubx to .uc2
+
+# Using the RTK2-GPS
+
+## Part 1: u-center 2
+Click "Add Device" and add the specific COM that the RTK2-GPS is plugged into
+Select a Baud rate of 38,400 (or 9,600 if debugging) 
+Wait for data to show up in the Console and Views Tabs (usually better to be outside)
+Click "Record log"
+Once you're finished recording end the record and save the log file
+Press the Convert log file and select your saved log file
+
+## Part 2: u-center
+Open u-center (different from u-center 2)
+follow tutorial for converting .uc2 files into .csv files: https://www.youtube.com/watch?v=zOANryt7UiM
+
