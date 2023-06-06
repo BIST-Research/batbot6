@@ -212,3 +212,11 @@ Press the Convert log file and select your saved log file
 Open u-center (different from u-center 2)
 follow tutorial for converting .uc2 files into .csv files: https://www.youtube.com/watch?v=zOANryt7UiM
 
+
+
+# Arduino w/ RTK-GPS Module
+
+The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all) refers to this [Arduino Library](https://github.com/sparkfun/SparkFun_u-blox_GNSS_v3). You can easily install the arduino library by opening up your Arduino IDE, go to 'Tools' --> 'Manage Libraries' --> search for 'SparkFun u-blox GNSS v3' and install it.
+
+
+
