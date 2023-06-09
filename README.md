@@ -117,6 +117,24 @@ If you want to SSH AND view graphics, you need to get a VNC client. VNC = virtua
 6. minimize that window, and now you can use the VNC for graphics by SSH'ing in again 
 TO DO: BEN UPDATE THIS ???
 
+If you simply need to SSH in without graphics  
+1. plug in the wi-fi router (the network should be named 'batbot')
+2. power on the jetson, which should automatically connect to the 'batbot' wifi router
+3. connect your computer to 'batbot' wifi
+4. windows: open up command prompt, then type: ssh batbot@batbot-desktop
+- enter password when prompted, then you should be in!
+
+For easy file sharing over SSH, download [Bitvise SSH Client](https://www.bitvise.com/download-area). This software enables you to connect via SSH with a GUI and view files on both your PC and the SSH'd device simultaneously.  
+1. plug in the wi-fi router (the network should be named 'batbot')
+2. power on the jetson, which should automatically connect to the 'batbot' wifi router
+3. connect your computer to 'batbot' wifi
+4. open bitvise SSH
+- server --> host: batbot-desktop
+- authentication --> username: batbot
+- click 'Log in' at the bottom. If this is your first time using Bitvise to connect to a device, it'll exchange some SSH keys and you should select 'Accept and Save'
+5. a terminal should open up, and you're good to do any terminal commands from here!
+6. File Sharing --> after you have a working terminal, on the left hand side of the Bitvise GUI select 'SFTP Connection'. This should open a new window in which you can see your file and the batbot jetson's file and easily transfer files over!
+ 
 # Code Overview
 
 ### Scripts 
