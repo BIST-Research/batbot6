@@ -133,7 +133,7 @@ For easy file sharing over SSH, download [Bitvise SSH Client](https://www.bitvis
 - authentication --> username: batbot
 - click 'Log in' at the bottom. If this is your first time using Bitvise to connect to a device, it'll exchange some SSH keys and you should select 'Accept and Save'
 5. a terminal should open up, and you're good to do any terminal commands from here!
-6. File Sharing --> after you have a working terminal, on the left hand side of the Bitvise GUI select 'SFTP Connection'. This should open a new window in which you can see your file and the batbot jetson's file and easily transfer files over!
+6. File Sharing --> after you have a working terminal, on the left hand side of the Bitvise GUI select 'New SFTP Window'. This should open a new window in which you can see your file and the batbot jetson's file and easily transfer files over!
  
 # Code Overview
 
