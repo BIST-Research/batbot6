@@ -2,7 +2,7 @@ data_directory: "data_dst"
 
 echo:
     #serial_number: "27D2EA9E53544C324E202020FF18483D"
-    serial_number: "A597C94353544C324E202020FF18412B"
+    serial_number: "FE7A097953544C324E202020FF183D0A"
     page_size: 2048
     baud: 128000
 

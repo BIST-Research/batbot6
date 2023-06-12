@@ -91,11 +91,11 @@ void setup() {
   ADC0->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN2_Val;
   dac_init();
   dma_init();
-  //timer_init();
+  timer_init();
   //amp_enable_timer();
 
   // disable amplifier
-  digitalWrite(12, HIGH);
+  digitalWrite(10, HIGH);
   
   // Trigger both ADCs to enter free-running mode
   ADC0->SWTRIG.bit.START = 1;
@@ -165,11 +165,11 @@ void loop() {
 
     }
       else if(opcode == 0xff){
-        digitalWrite(12, HIGH);
+        digitalWrite(10, HIGH);
       }
 
       else if(opcode == 0xfe){
-        digitalWrite(12, LOW);
+        digitalWrite(10, LOW);
       }
     //AMP_FORCE_RETRIGGER();
   }
@@ -249,10 +249,10 @@ void timer_init() {
   const uint32_t pin = 23;
 
  
-  PORT->Group[port_group].PINCFG[pin].reg |= (PORT_PINCFG_PMUXEN | PORT_PINCFG_DRVSTR);
+ // PORT->Group[port_group].PINCFG[pin].reg |= (PORT_PINCFG_PMUXEN | PORT_PINCFG_DRVSTR);
 
   //PA23, F -> 0x5
-  PORT->Group[port_group].PMUX[pin >> 1].reg |= PORT_PMUX_PMUXO(0x6); 
+  //PORT->Group[port_group].PMUX[pin >> 1].reg |= PORT_PMUX_PMUXO(0x6); 
 }
 
 void amp_enable_timer(void){

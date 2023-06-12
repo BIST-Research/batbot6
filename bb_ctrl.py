@@ -11,7 +11,6 @@ import yaml
 
 import bb_log
 
-from subprocess import Popen, PIPE
 from datetime import datetime
 from m4 import M4
 
@@ -36,9 +35,7 @@ class BatBot:
                         
             self.echo_sercom = M4(bb_conf['echo']['serial_number'], bb_conf['echo']['page_size'], bat_log)
             
-            #self.force_info = bb_conf['force']
           #  self.force_sercom = M4(bb_conf['force']['serial_number'], bb_conf['force']['page_size'], bat_log)
-
             
             self.data_directory = self.parent_directory + f"/{bb_conf['data_directory']}"
             
@@ -68,7 +65,8 @@ class BatBot:
             
        #     self.force_sercom.write([0x20])
                 
-
+       #     if self.force_sercom.read(1) == b'\x01':
+       #         break
                 
     def _get_data(self, inst, channel):
         
@@ -100,6 +98,12 @@ class BatBot:
         
         #return [echo_right, echo_left, force_left, force_right]
         return [echo_right, echo_left]
+        
+    def send_amp_stop(self):
+        self.echo_sercom.write([0xff])
+        
+    def send_amp_start(self):
+        self.echo_sercom.write([0xfe])
 
     
 #Jilun Code for Analysing Force Data
@@ -140,7 +144,6 @@ if __name__ == '__main__':
     n_fft = 1024
     y_max = instance.echo_sercom.page_size
     
-
     nruns_idx = 0
     time_start = datetime.now()
 
@@ -152,7 +155,7 @@ if __name__ == '__main__':
     
     echo_left_total, echo_right_total = [],[]
     
-    #force_process = Popen(['python3.8', 'bb_force.py', f"{instance.force_info['serial_number']}", f"{instance.force_info['page_size']}", f"{instance.force_info['baud']}"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    instance.send_amp_start()
     
     while True:
 
@@ -178,7 +181,6 @@ if __name__ == '__main__':
             #Adding to total
             echo_left_total = np.append(echo_left_total, echo_left)
             echo_right_total = np.append(echo_right_total, echo_right)
-
            # force_left_total = np.append(force_left_total, force_left)
            # force_right_total = np.append(force_right_total, force_right)
             
@@ -192,28 +194,25 @@ if __name__ == '__main__':
                # force_right_ax.clear()
 
                  # Plot
-
-
                 echo_left_ax.plot(echo_left_total)
                 echo_left_ax.set_ylim(0, y_max)
-                
+
                 echo_right_ax.plot(echo_right_total)
                 echo_right_ax.set_ylim(0, y_max)
+
                 #force_left_ax.plot(force_left_total)
                 #force_right_ax.plot(force_right_total)
-            
+
+                # Leave a status message
+                echo_left_ax.set_title('{} echo runs - {}'.format(nruns_idx, str(elapsed)[:-7]))
+                echo_right_ax.set_title('{} runs/min'.format(int(nruns_idx/max(elapsed.seconds,1)*60)))
+
                 echo_right_spec.specgram(echo_right_total, n_fft, r_samp, noverlap=n_fft//2)
                 echo_right_spec.set_ylim(0, r_samp//2)
                 
                 echo_left_spec.specgram(echo_left_total, n_fft, r_samp,
                     noverlap=n_fft//2)
                 echo_right_spec.set_ylim(0, r_samp//2)
-
-                # Leave a status message
-                echo_left_ax.set_title('{} echo runs - {}'.format(nruns_idx, str(elapsed)[:-7]))
-                echo_right_ax.set_title('{} runs/min'.format(int(nruns_idx/max(elapsed.seconds,1)*60)))
-                #echo_left_ax.set_ylim(0, 4096)
-                #echo_right_ax.set_ylim(0, 4096)
                 #force_left_ax.set_title('Force Data')
                 #force_left_ax.set_ylim(0, 100)
                 #force_right_ax.set_ylim(0, 100)
@@ -237,7 +236,7 @@ if __name__ == '__main__':
             bat_log.info("Interrupted")
             break
         
-    #force_process.kill()
+    instance.send_amp_stop()
     time_finish = datetime.now() - time_start
     bat_log.info(f"{nruns} runs took {time_finish}")
         
