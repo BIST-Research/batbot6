@@ -17,15 +17,18 @@ After which (on a machine you trust), you can do
 git config credential.helper store
 ```
 
-Which should allow you to execute git commands normally without explicitly providing your access token
+Which should allow you to execute git commands normally without explicitly providing your access token.
 
 ## Basic Usage
 
-```python3.8 bb_ctrl.py 200```
 
-Will execute 200 chirp and listen operations. Each execution of bb_ctrl creates a timestamped folder within ```data_dst``` and, for example if you do 200 runs, this timestamped folder, ```./data_dst/202309...``` will contain 200 binaries. Each binary contains data for both ears, and thus it is split down the middle, the first half containing right ear data and the second half containing left ear data. 
+### echo and listen
+`python3.8 bb_ctrl.py 200`
 
-### How do i know if it is working?
+Will execute 200 chirp and listen operations. Each execution of bb_ctrl creates a timestamped folder within `data_dst` and, for example if you do 200 runs, this timestamped folder, `./data_dst/202309...` will contain 200 binaries. Each binary contains data for both ears, and thus it is split down the middle, the first half containing right ear data and the second half containing left ear data. 
+
+
+#### How do I know if it is working?
 
 First, if you encouter an error about not being able to find device with serial number xyz, then make sure that the associated microcontrollers are connected (via USB at the moment) and have power (green LED is on). If it is both connected and on, unplug the microcontroller, plug it back in and press the reset button in the middle of the board and run the script again. 
 
@@ -34,6 +37,16 @@ If a matplot window appears, then the BatBot is recieving data from the microcon
 If you do not see some slanted lines on the spectrograms (these are the chirps), then it is likely that the main sonar amplification board is not recieving power. 
 
 The amp board should be recieving power from the 24v regulator, and when the script is running, the green enable LED on the amp board shuld be lit up. You can also listen for some faint clicking coming from the transducers. This indicates that the chirps are being amplified and sent out through the waveguide. 
+
+### Recording GPS data
+
+`cd rtk-gps`
+`python3.8 Example1_GetPositionAccuracy.py`
+
+This should create a 'data' folder and create a .csv file of the GPS coordinates. Note that you need a whole setup for this to work!
+
+Keep in mind the serial device connection for the ubuntu jetson is /dev/ttyACM0 and not the typical 'COMx' you see on Windows devices. You can view connected devices from terminal using `ls /dev/tty*`. Also don't forget to adjust / and \ when moving code between Windows and Ubuntu systems.
+
 
 ## Basic theory
 
@@ -67,6 +80,27 @@ So, other than some linear scaling and biasing to produce integers within the ca
 y[n] = x[n]w[n]
 ```
 
+
+# Git Flow
+
+This repo has branches dedicated to specific devices. 
+- 'vehicle' lives on the batbot6 [only those with the vehicle can make changes to this branch]
+- 'vehicle-test' is where code should be put to test new features on the batbot. After a successful test, this branch should be merged into 'vehicle'.
+- 'bench' is for those at VTech who are developi
+- when developing new features from VTech, create a branch off of 'bench', develop the feature on that branch, then merge it back into 'bench' when finished. 
+
+In conclusion, features should generally flow from bench --> vehicle-test --> vehicle. Those with the physical batbot are the only ones working on the vehicle branch, the vehicle-test is the interface between the two.
+
+For now, main is just chilling... don't know what do to with it but also don't want to delete it in case we need to revert.
+
+### git Branch Commands
+1. `git branch` --> check what branch you are on (not your local machine will not pull in all the branches automatically)
+2. `git checkout <branch_name>` --> checkout a branch to do work on it. always be aware of which branch you are on... this is also how you bring a remote branch down onto your computer. This is also how you create a new branch.
+3. once you are on a branch, you can use all the same git commands and `add`, `commit`, `pull`, and `push`.
+
+Pro-tip, download GitKraken to make branching and merging much easier! It's not free usually, but you students can get the free student developer kit through GitHub which includes a GitKraken membership.
+
+[Read more](https://danielkummer.github.io/git-flow-cheatsheet/) on this Git Flow here, we are roughly sticking to this approach.
 
 # System Overview
 
