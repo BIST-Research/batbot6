@@ -10,7 +10,7 @@ import os
 
 
 # connect via serial port (if you are on a PC, you can check this in device manager)
-ser = serial.Serial('COM5', 115200) 	# likely need to change the com port number and serial rate
+ser = serial.Serial('/dev/ttyACM0', 115200) 	# likely need to change the com port number and serial rate
 
 # place to save the raw data files
 directory_path = "raw_data"
@@ -26,7 +26,7 @@ current_datetime = datetime.datetime.now()
 formatted_datetime = current_datetime.strftime("%Y%m%d%H%M%S")
 
 # create csv_filename and output to user
-csv_filename = directory_path + "\logged_gps_" + formatted_datetime + ".csv"
+csv_filename = directory_path + "/logged_gps_" + formatted_datetime + ".csv"
 print("Saving csv as " + csv_filename + " in the current directory")
 print("logging data... use 'ctrl+c' to stop")
 
