@@ -85,10 +85,10 @@ void setup() {
   // Initialize peripherals -> These functions are defined at the bottom. Essentially just setting up the board's peripherals
   clock_init();
   adc_init(A2, ADC1);
-  adc_init(A5, ADC0);
+  adc_init(A3, ADC0);
 
-  ADC1->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN1_Val;
-  ADC0->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN2_Val;
+  //ADC1->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN1_Val;
+  //ADC0->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN2_Val;
   dac_init();
   dma_init();
   timer_init();
@@ -377,7 +377,7 @@ void adc_init(int inpselCFG, Adc *ADCx) {
   ADCx->INPUTCTRL.reg = ADC_INPUTCTRL_MUXNEG_GND;   // No Negative input (Internal Ground)
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL );
   
-  //ADCx->INPUTCTRL.bit.MUXPOS = g_APinDescription[inpselCFG].ulADCChannelNumber; // Selection for the positive ADC input
+  ADCx->INPUTCTRL.bit.MUXPOS = g_APinDescription[inpselCFG].ulADCChannelNumber; // Selection for the positive ADC input
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL );
   
   ADCx->CTRLA.bit.PRESCALER = ADC_CTRLA_PRESCALER_DIV4_Val; // Frequency set. SAMD51 Datasheet pp. 1323. f(CLK_ADC) = fGLCK/2^(1+4) = 1.5MHz
