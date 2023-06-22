@@ -238,3 +238,11 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
 
 [RTKlib](https://www.rtklib.com/)
 
+# Information to consider for sonar capabilities on BatBox
+- chirps should range from 3-5 miliseconds
+	- always ensure >= 3 milisecond pulse before recording
+- sound travels at 17 cm/milisecond 
+	- 3 milisecond = 51 cm
+- <= 50 miliseconds would be maxium amount
+	- 20 chirps / second
+- Longer chirp = more energy used
