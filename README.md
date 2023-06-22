@@ -246,3 +246,9 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
 - <= 50 miliseconds would be maxium amount
 	- 20 chirps / second
 - Longer chirp = more energy used
+0 = Chirp
+--- = listening time
+0---------0---------->
+3ms 22ms  3ms  22ms
+---------------------> 
+         time
