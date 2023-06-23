@@ -111,7 +111,7 @@ void adc_init(int inpselCFG, Adc *ADCx){
   ADCx->INPUTCTRL.reg = ADC_INPUTCTRL_MUXNEG_GND;   // No Negative input (Internal Ground)
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL );
   
-  ADCx->INPUTCTRL.bit.MUXPOS = g_APinDescription[inpselCFG].ulADCChannelNumber; // Selection for the positive ADC input
+  //ADCx->INPUTCTRL.bit.MUXPOS = g_APinDescription[inpselCFG].ulADCChannelNumber; // Selection for the positive ADC input
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL );
   
   ADCx->CTRLA.bit.PRESCALER = ADC_CTRLA_PRESCALER_DIV4_Val; // Frequency set. SAMD51 Datasheet pp. 1323. f(CLK_ADC) = fGLCK/2^(1+4) = 1.5MHz
@@ -149,10 +149,13 @@ void setup() {
   left_in_idx = right_in_idx = 0;
 
   clock_init();
-  adc_init(A1, ADC0);
-  adc_init(A3, ADC1);
+  adc_init(A1, ADC1);
+  adc_init(A2, ADC0);
   dma_init();
   timer_init();
+
+  ADC1->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN1_Val;
+  ADC0->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN2_Val;
 
   ADC0->SWTRIG.bit.START = 1;
   ADC1->SWTRIG.bit.START = 1;

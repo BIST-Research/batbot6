@@ -1,0 +1,37 @@
+# Package install
+sudo apt update && sudo apt upgrade -y
+sudo apt install build-essential linux-headers-generic
+sudo apt install python3.8 python3.8-dev python3-pip xfce4 xfce4-goodies
+sudo apt install tightvncserver
+
+# WiFi adapter driver
+git clone https://github.com/RinCat/RTL88x2BU-Linux-Driver
+cd RTL88x2BU-Linux-Driver
+make clean
+make
+sudo make install
+
+# GitHub Jetson code
+git clone https://github.com/bepiis/bat_bot_6
+
+# VNC server setup, first cmd prompts to set password (batbot20)
+vncserver 
+vncserver -kill :1
+mv ~/.vnc/xstartup ~/.vnc/xstartup.bak
+cp vnc/xstartup ~/.vnc/
+chmod +x ~/.vnc/xstartup
+vncserver -localhost
+sudo cp vnc/vncserver@.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable vncserver@1.service
+vncserver -kill :1
+sudo systemctl start vncserver@1
+sudo systemctl status vncserver@1
+
+# Host cmd to create ssh tunnel for VNC connection
+ssh -L 59000:localhost:5901 -C -N -l batbot batbot-desktop.local
+
+# Use this address in VNC client software to connect
+localhost:59000
+
+

@@ -140,21 +140,28 @@ if __name__ == '__main__':
     
     instance = BatBot()
     
-    r_samp = 937500
-    n_fft = 1024
-    y_max = instance.echo_sercom.page_size
-    
+
     nruns_idx = 0
     time_start = datetime.now()
 
     #f, ((echo_left_ax, echo_right_ax), (force_left_ax, force_right_ax)) = plt.subplots(2, 2, sharey=False)
 
-    f, ((echo_left_ax, echo_left_spec), (echo_right_ax, echo_right_spec)) = plt.subplots(2, 2, sharey=False)
+    #f, (echo_left_ax, echo_right_ax) = plt.subplots(1, 2, sharey=False)
 
     #echo_left_total, echo_right_total, force_left_total, force_right_total = [],[],[],[]
     
+    #echo_left_total, echo_right_total = [],[]
+
+    r_samp = 937500
+    n_overlap = 512
+    n_fft = 1024
+
+    f, ((echo_left_ax, echo_left_spec), (echo_right_ax, echo_right_spec)) = plt.subplots(2, 2, sharey=False)
+
     echo_left_total, echo_right_total = [],[]
-    
+   
+
+
     instance.send_amp_start()
     
     while True:
@@ -195,24 +202,23 @@ if __name__ == '__main__':
 
                  # Plot
                 echo_left_ax.plot(echo_left_total)
-                echo_left_ax.set_ylim(0, y_max)
-
                 echo_right_ax.plot(echo_right_total)
-                echo_right_ax.set_ylim(0, y_max)
-
                 #force_left_ax.plot(force_left_total)
                 #force_right_ax.plot(force_right_total)
+
+                echo_right_spec.specgram(echo_right_total, n_fft, r_samp, noverlap=n_overlap)
+                echo_left_spec.specgram(echo_left_total, n_fft, r_samp, noverlap=n_overlap)
+
+                echo_left_ax.set_ylim(0, 4096)
+                echo_right_ax.set_ylim(0, 4096)
+   
+                echo_right_spec.set_ylim(0, r_samp//4)
+                echo_left_spec.set_ylim(0, r_samp//4)
 
                 # Leave a status message
                 echo_left_ax.set_title('{} echo runs - {}'.format(nruns_idx, str(elapsed)[:-7]))
                 echo_right_ax.set_title('{} runs/min'.format(int(nruns_idx/max(elapsed.seconds,1)*60)))
 
-                echo_right_spec.specgram(echo_right_total, n_fft, r_samp, noverlap=n_fft//2)
-                echo_right_spec.set_ylim(0, r_samp//2)
-                
-                echo_left_spec.specgram(echo_left_total, n_fft, r_samp,
-                    noverlap=n_fft//2)
-                echo_right_spec.set_ylim(0, r_samp//2)
                 #force_left_ax.set_title('Force Data')
                 #force_left_ax.set_ylim(0, 100)
                 #force_right_ax.set_ylim(0, 100)
