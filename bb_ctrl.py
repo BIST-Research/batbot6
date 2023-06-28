@@ -140,7 +140,14 @@ if __name__ == '__main__':
     
     instance = BatBot()
     
+<<<<<<< Updated upstream
 
+=======
+    r_samp = 428571
+    n_fft = 1024
+    y_max = instance.echo_sercom.page_size
+    
+>>>>>>> Stashed changes
     nruns_idx = 0
     time_start = datetime.now()
 
@@ -190,7 +197,7 @@ if __name__ == '__main__':
             echo_right_total = np.append(echo_right_total, echo_right)
            # force_left_total = np.append(force_left_total, force_left)
            # force_right_total = np.append(force_right_total, force_right)
-            
+
             if nruns_idx % plot_interval == 0 and nruns_idx != 0:
                 elapsed = datetime.now() - time_start
 
@@ -203,6 +210,15 @@ if __name__ == '__main__':
                  # Plot
                 echo_left_ax.plot(echo_left_total)
                 echo_right_ax.plot(echo_right_total)
+<<<<<<< Updated upstream
+=======
+                echo_right_ax.set_ylim(0, y_max)
+                echo_right_spec.specgram(echo_right_total, n_fft, r_samp, noverlap=n_fft//2)
+                echo_right_spec.set_ylim(0, r_samp//2)
+                    
+                echo_left_spec.specgram(echo_left_total, n_fft, r_samp, noverlap=n_fft//2)
+                echo_right_spec.set_ylim(0, r_samp//2)
+>>>>>>> Stashed changes
                 #force_left_ax.plot(force_left_total)
                 #force_right_ax.plot(force_right_total)
 
@@ -219,6 +235,10 @@ if __name__ == '__main__':
                 echo_left_ax.set_title('{} echo runs - {}'.format(nruns_idx, str(elapsed)[:-7]))
                 echo_right_ax.set_title('{} runs/min'.format(int(nruns_idx/max(elapsed.seconds,1)*60)))
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
                 #force_left_ax.set_title('Force Data')
                 #force_left_ax.set_ylim(0, 100)
                 #force_right_ax.set_ylim(0, 100)

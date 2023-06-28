@@ -37,10 +37,10 @@ static DmacDescriptor descriptor1 __attribute__((aligned(16)));
 
 // Number of bytes per page (double the number of uint16_t readings)
 // Here Brandon is defining a "Page" as a set of data  (4096 bytes)
-constexpr int PAGE_SIZE = 2048;
+constexpr int PAGE_SIZE = 8192;
 // It takes ~4.4ms to collect 4096/2=2048 readings, so round up to the nearest
 // multiple of 4.4
-constexpr int NUM_PAGES = (DURATION + 4.4) / 4.4;
+constexpr int NUM_PAGES = 7;
 
 /*
  * DMA buffers
@@ -84,8 +84,8 @@ void setup() {
 
   // Initialize peripherals -> These functions are defined at the bottom. Essentially just setting up the board's peripherals
   clock_init();
-  adc_init(A2, ADC1);
-  adc_init(A5, ADC0);
+  adc_init(A2, ADC0);
+  adc_init(A3, ADC1);
 
   ADC1->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN1_Val;
   ADC0->INPUTCTRL.bit.MUXPOS = ADC_INPUTCTRL_MUXPOS_AIN2_Val;
@@ -101,7 +101,6 @@ void setup() {
   ADC0->SWTRIG.bit.START = 1;
   ADC1->SWTRIG.bit.START = 1;
 }
-
 
 void loop() {
 
@@ -134,12 +133,12 @@ void loop() {
       
       // Start all DMA jobs
       DMAC->CTRL.bit.DMAENABLE = 0;                                         // Temporarily disables the DMA so that it's properties can be rewritten. 
-
       out_dma.startJob();
       left_in_dma.startJob();                                               // This line starts the DMA job for the buffer "left_in_dma" , i.e. the left ear mic.
       right_in_dma.startJob(); 
       
-      DMAC->CTRL.bit.DMAENABLE = 1;                                         // Now that DMA is configured, re-enable it 
+      DMAC->CTRL.bit.DMAENABLE = 1;   
+      //opcode = 0;// Now that DMA is configured, re-enable it 
     }
     // Check run status                                                     
     else if (opcode == 0x20) {                                              // If the incoming OPCODE is '0x20' then the M4 will return the 'data_ready' flag (true/false)
@@ -171,6 +170,7 @@ void loop() {
       else if(opcode == 0xfe){
         digitalWrite(12, LOW);
       }
+
     //AMP_FORCE_RETRIGGER();
   }
 
@@ -380,13 +380,14 @@ void adc_init(int inpselCFG, Adc *ADCx) {
   //ADCx->INPUTCTRL.bit.MUXPOS = g_APinDescription[inpselCFG].ulADCChannelNumber; // Selection for the positive ADC input
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_INPUTCTRL );
   
-  ADCx->CTRLA.bit.PRESCALER = ADC_CTRLA_PRESCALER_DIV4_Val; // Frequency set. SAMD51 Datasheet pp. 1323. f(CLK_ADC) = fGLCK/2^(1+4) = 1.5MHz
+  ADCx->CTRLA.bit.PRESCALER = ADC_CTRLA_PRESCALER_DIV8_Val; // Frequency set. SAMD51 Datasheet pp. 1323. f(CLK_ADC) = fGLCK/2^(1+4) = 1.5MHz
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_CTRLB );         // Gives sampling rate 1.5MHz/(12+4) ~= 125 kHz? The prescaler might need to be changed to 2 if data is messy...
   
   ADCx->CTRLB.bit.RESSEL = ADC_CTRLB_RESSEL_12BIT_Val;
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_CTRLB );
   
-  ADCx->SAMPCTRL.reg = 0x0;                        
+  //ADCx->SAMPCTRL.reg = 0x0;
+  ADCx->SAMPCTRL.reg |= ADC_SAMPCTRL_SAMPLEN(2);                        
   while( ADCx->SYNCBUSY.reg & ADC_SYNCBUSY_SAMPCTRL );
   
   ADCx->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |    // 1 sample only (no oversampling nor averaging)
@@ -414,7 +415,7 @@ void generate_chirp()
   const double phi = 0;
 
   // Initial frequency (Hz)
-  const double f0 = 150e3;
+  const double f0 = 300e3;
   // Final frequency (Hz)
   const double f1 = 80e3;
 
