@@ -255,17 +255,27 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
          time
 
 
-# How to run sonar data collection and gps system simultaneoulsy
+# How to run sonar data collection and gps system simultaneoulsy (for field work)
 
 Write these exact prompts in the command line:
 
+Plug into an ethernet cable and SSH into the batbot to start running the GPS logger and echoes
+```ssh batbot@batbot-desktop```
+enter password
 ```cd batbot6```    
 ```nohup python3 rtk-gps/IRES_logger.py &```   
 press enter    
-```nohup python3.8 bb_ctrl.py```      
-```ps aux | grep python (this is used to find the PID of the nohup command)```      
-```kill PID```       
+```nohup python3.8 bb_ctrl.py &```
+press enter
+make note of the two processes that are running! you will need these process ID numbers (PID) later!
+you can also find the process ID with ```ps aux | grep python``` 
+disconnect your ethernet cable, and go do your field testing!
+
+finish your field testing, then reconnect the ethernet cable
+check the status of the processes by running ```ps -p <PID>```, look at the 'TIME' column and ensure that the time matches the time doing testing
+then stop everything with ```kill <PID>``` (use the PID you found earlier, ex: ```kill 8912```)
 
 After writing these prompts out you can exit the command line and navigate to the files on batbot6
 - open raw_data
 - open logged .csv file to see longitude and latitude coordinates
+- then relax
