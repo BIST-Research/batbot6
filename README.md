@@ -259,12 +259,12 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
 
 Write these exact prompts in the command line:
 
-'''cd batbot6  
+```cd batbot6  
 nohup python3 rtk-gps/IRES_logger.py &  
 press enter  
 python3.8 bb_ctrl.py  
 ps aux | grep python (this is used to find the PID of the nohup command)  
-kill PID'''    
+kill PID```    
 
 After writing these prompts out you can exit the command line and navigate to the files on batbot6
 - open raw_data
