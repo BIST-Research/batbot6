@@ -1,19 +1,5 @@
 import logging
 
-def get_log():
-
-    log = logging.getLogger("bat")
-    log.setLevel(logging.DEBUG)
-    
-    ch= logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    
-    ch.setFormatter(CustomFormatter())
-    
-    log.addHandler(ch)
-    
-    return log
-
 class CustomFormatter(logging.Formatter):
     
     grey = "\x1b[38;20m"

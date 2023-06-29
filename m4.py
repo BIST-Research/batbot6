@@ -1,9 +1,8 @@
 import serial
 import serial.tools.list_ports
 import logging
+import sys
 import time
-
-import bb_log
 
 def search_comports(serial_number):
 
@@ -19,23 +18,23 @@ def search_comports(serial_number):
 
 class M4:
     
-    def __init__(self, serial_number, page_size, bat_log):
+    def __init__(self, serial_number, num_adc_samples, bat_log):
     
-        self.page_size = page_size
                 
         self.port = search_comports(serial_number)
-        
+        self.num_adc_samples = num_adc_samples
         self.bat_log = bat_log
-                    
-        if self.port == "None":
+        
+        
+        if str(self.port) == "None":
             self.bat_log.critical(f"Could not find device with serial number {serial_number}")
             exit()
             
-        
+            
         self.sercom = serial.Serial(self.port.device)
-            
-        self.bat_log.info(f"Found device {serial_number} on {self.port.device}")
-            
+        
+        bat_log.info(f"Found {self.port.serial_number} on {self.port.device}")
+
         self.reset()
         
     def reset(self):
