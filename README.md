@@ -273,7 +273,7 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
 [RTKlib](https://www.rtklib.com/)
 
 ## Working with and Uploading echo code
-#VSCode, PlatformIO and uploading code
+# VSCode, PlatformIO and uploading code
 
 First, install [VSCode](https://code.visualstudio.com/Download) and the [PlatformIO](https://platformio.org/install/ide?install=vscode) extension. 
 
@@ -304,7 +304,7 @@ If you change this value, you must also change it in ```bb_conf.yaml```!
 
 ****STILL WORKING ON WRITING STAY TUNED****
 
-##Updating the MCU bootloader
+## Updating the MCU bootloader
 Go [here](https://github.com/adafruit/uf2-samdx1/releases/tag/v3.15.0) to download the most recent bootloader. Do not follow the links in the instruction page below since they're not regularly updated to point at the most updated versions. 
 
 Follow the instructions [here](https://learn.adafruit.com/introducing-adafruit-itsybitsy-m4/update-the-uf2-bootloader) to update the MCU's bootloader. 
