@@ -1,7 +1,0 @@
-# Author: Ben Westcott
-# Created: 4/22/23
-
-matplotlib
-numpy
-pyserial
-pyyaml
