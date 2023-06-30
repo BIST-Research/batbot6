@@ -7,10 +7,23 @@ import datetime
 import serial
 import csv
 import os
-
+import signal
+import sys
 
 # connect via serial port (if you are on a PC, you can check this in device manager)
-ser = serial.Serial('/dev/ttyACM0', 115200) 	# likely need to change the com port number and serial rate
+ser = serial.Serial('/dev/ttyACM1', 115200) 	# likely need to change the com port number and serial rate (Do I need to specify which serial port? 'COM5')
+# do a ls /dev/tty* check before runnning since keyboards and other devices an change ACM ports
+
+# Define the signal handler function 
+def signal_handler(sig, frame):
+
+#Close the file and serial port before exiting
+	file.close()
+	ser.close()
+	sys.exit(0)
+
+signal.signal(signal.SIGTERM, signal_handler)
+#	test (replacing SIGTERM with SIGINT)
 
 # place to save the raw data files
 directory_path = "raw_data"
@@ -51,14 +64,21 @@ with open(csv_filename, 'a', newline='') as file:
 			
 				# grab the data from the serial buffer
 				data = ser.readline().decode().rstrip()
+								
 	
 				# print data as an output (for debugging... comment out later)
 				#print(f"Received data: {data}")
 
 				# write the data into a new line of the csv
 				writer.writerow(data.split(","))
+				#time.sleep(0.1) #Adding small delay to allow for processing and writing
 
 	except KeyboardInterrupt:
 		print("Logging stopped by user!")
 
-ser.close()
+	finally:
+		print("Closing the file and serial connection in the finally block.")
+		file.close()
+		ser.close()
+
+# added in finally (replaced original which just stated ser.close()

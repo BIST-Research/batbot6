@@ -1,0 +1,10 @@
+Saving csv as raw_data/logged_gps_20230626041641.csv in the current directory
+logging data... use 'ctrl+c' to stop
+Closing the file and serial connection in the finally block.
+Saving csv as raw_data/logged_gps_20230626042128.csv in the current directory
+logging data... use 'ctrl+c' to stop
+Closing the file and serial connection in the finally block.
+[0;37m[2023-06-25 23:47:04,807 - INFO]:	Found device FBD7447F5351523450202020FF0E320A on /dev/ttyACM0[0m
+Saving csv as raw_data/logged_gps_20230625234631.csv in the current directory
+logging data... use 'ctrl+c' to stop
+Closing the file and serial connection in the finally block.
