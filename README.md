@@ -304,10 +304,9 @@ There are a few variables within ```ml_main.cpp``` that can be played around wit
 
 ```TCC_set_period``` w/in the ```wait_timer_init``` function - This variable sets the wait time between the chirp and when the microphones start listening. This value cna be set as follows:
 
-```T = (PRESCALER * PERIOD_VALUE)/F_GCLK_TIMER```
 
 ```math
-T_{wait} = \cfrac{P * v}{f_{GCLK}}
+T_{\text{wait}} = \cfrac{P * v}{f_{\text{gclk}}}
 ```
 
 Where $`T_{wait}`$ is the time to wait between chirp and record, $`P`$ is the timer prescaler, $`v`$ is the period division value (second argument to ```TCC_set_period``` macro) and $`f_{GCLK}`$ is the clock frequency fed to the peripheral.
