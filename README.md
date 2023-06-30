@@ -295,12 +295,24 @@ Press the arrow icon in the bottom toolbar to upload the code. If the upload pro
 
 NOTE: The main python script was renamed from ```bb_ctrl.py``` to ```bb_run.py```
 
-#Working with the code
+# Working with the code
 There are a few variables within ```ml_main.cpp``` that can be played around with:
 
 ```uint16_t num_adc_samples = 25000``` - This variable effectively allows to change the record time of the microphones. Currently, they are set to record for ```25000 samples * 2.4E-6 s/sample = 60 ms```. Not sure how far you can push this value, but if you choose to push passed 65355 = 2**16 - 1, then you'll have to change the variable from a halfword (```uint16_t```) to a word (```uint32_t```).
 
-If you change this value, you must also change it in ```bb_conf.yaml```!
+**If you change this value, you must also change it in ```bb_conf.yaml```!**
+
+```TCC_set_period``` w/in the ```wait_timer_init``` function - This variable sets the wait time between the chirp and when the microphones start listening. This value cna be set as follows:
+
+```T = (PRESCALER * PERIOD_VALUE)/F_GCLK_TIMER```
+
+```math
+T_{wait} = \cfrac{P * v}{f_{GCLK}}
+```
+
+Where $`T_{wait}`$ is the time to wait between chirp and record, $`P`$ is the timer prescaler, $`v`$ is the period division value (second argument to ```TCC_set_period``` macro) and $`f_{GCLK}`$ is the clock frequency fed to the peripheral.
+
+For example (and how I have it originally set): $`P = 256`$, $`f_{GCLK} = 120\,\,\text{MHz}`$ and if I want a 100ms wait time, then $`v = 46875`$
 
 ****STILL WORKING ON WRITING STAY TUNED****
 
