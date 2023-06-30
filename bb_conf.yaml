@@ -5,6 +5,7 @@ echo:
     #serial_number: "A597C94353544C324E202020FF18412B"
     serial_number: "FE7A097953544C324E202020FF183D0A"
     num_adc_samples: 25000
+    page_size: 2048 #testing this out (Parisi, 2:58pm June30)
     baud: 128000
 
 force:
