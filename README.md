@@ -272,8 +272,8 @@ The [setup guide](https://learn.sparkfun.com/tutorials/gps-rtk2-hookup-guide/all
 
 [RTKlib](https://www.rtklib.com/)
 
-## Working with and Uploading echo code
-# VSCode, PlatformIO and uploading code
+# Echo embedded code
+## VSCode, PlatformIO and uploading code
 
 First, install [VSCode](https://code.visualstudio.com/Download) and the [PlatformIO](https://platformio.org/install/ide?install=vscode) extension. 
 
@@ -295,12 +295,28 @@ Press the arrow icon in the bottom toolbar to upload the code. If the upload pro
 
 NOTE: The main python script was renamed from ```bb_ctrl.py``` to ```bb_run.py```
 
-#Working with the code
+## Working with the code
 There are a few variables within ```ml_main.cpp``` that can be played around with:
 
-```uint16_t num_adc_samples = 25000``` - This variable effectively allows to change the record time of the microphones. Currently, they are set to record for ```25000 samples * 2.4E-6 s/sample = 60 ms```. Not sure how far you can push this value, but if you choose to push passed 65355 = 2**16 - 1, then you'll have to change the variable from a halfword (```uint16_t```) to a word (```uint32_t```).
+### ```uint16_t num_adc_samples = 25000```
+This variable effectively allows to change the record time of the microphones. Currently, they are set to record for ```25000 samples * 2.4E-6 s/sample = 60 ms```. Not sure how far you can push this value, but if you choose to push passed 65355 = 2**16 - 1, then you'll have to change the variable from a halfword (```uint16_t```) to a word (```uint32_t```).
 
-If you change this value, you must also change it in ```bb_conf.yaml```!
+**If you change this value, you must also change it in ```bb_conf.yaml```!**
+
+###  ```TCC_set_period``` w/in the ```wait_timer_init``` function
+This variable sets the wait time between the chirp and when the microphones start listening. This value cna be set as follows:
+
+
+```math
+T_{\text{wait}} = \cfrac{P * v}{f_{\text{gclk}}}
+```
+
+Where $`T_{wait}`$ is the time to wait between chirp and record, $`P`$ is the timer prescaler, $`v`$ is the period division value (second argument to ```TCC_set_period``` macro) and $`f_{GCLK}`$ is the clock frequency fed to the peripheral.
+
+For example (and how I have it originally set): $`P = 256`$, $`f_{\text{gclk}} = 120\,\,\text{MHz}`$ and if I want a 100ms wait time, then $`v = 46875`$
+
+### f0 and f1 w/in the ```generate_chirp``` function
+These values indicate the range of the linear sweep of frequencies present in the chirp. **Keep in mind that at roughly a 400kHz sampling rate (actual sampling rate is ```1/(2.4us)```), setting these variables beyond 200kHz cant be accurately picked up by the ADCS**
 
 ****STILL WORKING ON WRITING STAY TUNED****
 
