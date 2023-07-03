@@ -1,10 +1,10 @@
 data_directory: "data_dst"
 
 echo:
-    #serial_number: "27D2EA9E53544C324E202020FF18483D"
-    #serial_number: "A597C94353544C324E202020FF18412B"
-   #serial_number: "FE7A097953544C324E202020FF183D0A"
-    serial_number: "FBD7447F5351523450202020FF0E320A"
+   # serial_number: "27D2EA9E53544C324E202020FF18483D"
+   # serial_number: "A597C94353544C324E202020FF18412B"
+   # serial_number: "FE7A097953544C324E202020FF183D0A"
+    serial_number: "FBD7447F5351523450202020FF0E320A" #in brunei
     num_adc_samples: 25000
     page_size: 2048 #testing this out (Parisi, 2:58pm June30)
     baud: 128000
