@@ -100,8 +100,13 @@ uint32_t generate_chirp(void)
 
   const double phi = 0;
 
-  const int f0 = 150E3;
-  const int f1 = 40E3;
+  const int f0 = 120E3;
+  const int f1 = 20E3;
+
+// we changed f0 from 150E3 to 120 E3 and changed f1 from 40E3 to 20E3
+//
+//
+
 
   const double k = (f1 - f0) / t1;
 
@@ -214,7 +219,16 @@ void wait_timer_init(void)
 
   TCC2->WAVE.reg = TCC_WAVE_WAVEGEN_NFRQ | TCC_WAVE_POL0;
 
-  TCC_set_period(TCC2, 46875);
+  TCC_set_period(TCC2, 1);
+// change this please
+// changing from 46875 to 1
+// this should result  to 2  microseconds delay
+// if 1 doesnt work try 3 or 4
+// note: you have to change it on Danny's laptop as well 
+//
+//
+//
+
 
   TCC_SET_ONESHOT(TCC2);
   TCC_sync(TCC2);
