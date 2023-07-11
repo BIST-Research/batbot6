@@ -100,13 +100,8 @@ uint32_t generate_chirp(void)
 
   const double phi = 0;
 
-  const int f0 = 120E3;
-  const int f1 = 20E3;
-
-// we changed f0 from 150E3 to 120 E3 and changed f1 from 40E3 to 20E3
-//
-//
-
+  const int f0 = 150E3;
+  const int f1 = 120E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -125,6 +120,7 @@ uint32_t generate_chirp(void)
     // fill DMA buffer 
     chirp_out_buffer[i] = (uint16_t)((4096/2) * (1 + chirp * window));
   }
+  chirp_out_buffer[0] = 0;
   chirp_out_buffer[4095] = 0;
   return (uint32_t)&chirp_out_buffer[0] + num_samples * sizeof(uint16_t);
 }
@@ -219,26 +215,19 @@ void wait_timer_init(void)
 
   TCC2->WAVE.reg = TCC_WAVE_WAVEGEN_NFRQ | TCC_WAVE_POL0;
 
-  TCC_set_period(TCC2, 1);
-// change this please
-// changing from 46875 to 1
-// this should result  to 2  microseconds delay
-// if 1 doesnt work try 3 or 4
-// note: you have to change it on Danny's laptop as well 
-//
-//
-//
-
+  TCC_set_period(TCC2, 10);
 
   TCC_SET_ONESHOT(TCC2);
   TCC_sync(TCC2);
 
   TCC_intenset(TCC2, TCC2_0_IRQn, TCC_INTENSET_OVF, 0);
 
-  TCC2->CC[0].reg |= TCC_CC_CC(20000);
+  TCC2->CC[0].reg |= TCC_CC_CC(5);
 
-  peripheral_port_init(PORT_PMUX_PMUXE(0x5), 28, OUTPUT_PULL_DOWN, DRIVE_ON);
+  // GC port
+  //perip2heral_port_init(PORT_PMUX_PMUXE(0x5), 28, OUTPUT_PULL_DOWN, DRIVE_ON);
 
+  peripheral_port_init(PORT_PMUX_PMUXE(0x5), 4, OUTPUT_PULL_DOWN, DRIVE_ON);
 }
 
 
@@ -344,7 +333,7 @@ void dac_init(void)
   );
 }
 
-const uint16_t num_adc_samples = 25000;
+const uint16_t num_adc_samples = 20000;
 
 #define PASTE_FUSE(REG) ((*((uint32_t *) (REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
@@ -410,7 +399,7 @@ void adc0_init(void)
     ADC0_FUSES_BIASR2R(r2r)
   );
 
-  ADC0->CTRLA.reg |= ADC_CTRLA_PRESCALER_DIV16;
+  ADC0->CTRLA.reg |= ADC_CTRLA_PRESCALER_DIV8;
 
   ADC0->SAMPCTRL.reg |= ADC_SAMPCTRL_SAMPLEN(3U - 1);
 
@@ -493,7 +482,7 @@ void adc1_init(void)
     ADC1_FUSES_BIASR2R(r2r)
   );
 
-  ADC1->CTRLA.reg |= ADC_CTRLA_PRESCALER_DIV16;
+  ADC1->CTRLA.reg |= ADC_CTRLA_PRESCALER_DIV8;
 
   ADC1->SAMPCTRL.reg |= ADC_SAMPCTRL_SAMPLEN(3U - 1);
 
@@ -519,6 +508,8 @@ void adc1_init(void)
 
 void setup() 
 {
+  //JETSON_SERIAL.begin(115200);
+  //while(!Serial);
 
   MCLK_init();
   GCLK_init();
@@ -527,7 +518,7 @@ void setup()
 
   DMAC_init(&base_descriptor[0], &wb_descriptor[0]);
 
-  emit_resonator_timer_init();
+  //emit_resonator_timer_init();
 
   //emit_modulator_timer_init();
   dac_init();
@@ -541,9 +532,8 @@ void setup()
   adc1_init();
 
 
-
-  TCC_ENABLE(TCC0);
-  TCC_sync(TCC0);
+  //TCC_ENABLE(TCC0);
+  //TCC_sync(TCC0);
 
   //TCC_ENABLE(TCC1);
   //TCC_sync(TCC1);
@@ -572,6 +562,7 @@ void setup()
   TCC_FORCE_STOP(TCC2);
   TCC_sync(TCC2);
 
+  
   ML_DMAC_ENABLE();
 
   ML_DMAC_CHANNEL_ENABLE(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
@@ -584,6 +575,7 @@ void setup()
 
   ML_DMAC_CHANNEL_ENABLE(ADC1_DMAC_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(ADC1_DMAC_CHANNEL);
+
   //DMAC_CH_ENABLE(ML_DMAC_EAR_R_CH);
   //DMAC_CH_ENABLE(ML_DMAC_EAR_L_CH);
 
@@ -594,8 +586,7 @@ void setup()
 
   //hardware_int_trigger_init();
 
-  JETSON_SERIAL.begin(115200);
-  while(!Serial);
+
 
 }
 

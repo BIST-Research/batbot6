@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 import yaml
+from scipy import signal
 
 import bb_log
 
@@ -72,7 +73,7 @@ class BatBot:
 if __name__ == '__main__':
     
     nruns = 0
-    plot_interval = 3
+    plot_interval = 1
 
     if(len(sys.argv)) < 2:
         nruns =  -1
@@ -81,9 +82,9 @@ if __name__ == '__main__':
     
     instance = BatBot()
 
-    r_samp = 1/(2.4E-6)
-    n_fft = 1024
-    y_max = 4096
+    r_samp = 2/(2.4E-6)
+    n_fft = 256
+    y_max = 1200
 
     nruns_idx = 0
     time_start = datetime.now()
@@ -109,12 +110,18 @@ if __name__ == '__main__':
             
             
             echo_right, echo_left = unraw_data
+            
+            #sos = signal.butter(2, [40E3, 150E3], 'bp', fs=r_samp, output='sos')
+            #filt_right = signal.sosfilt(sos, echo_right)
+            #filt_left = signal.sosfilt(sos, echo_left)
 
             #print(echo_right)
+            #echo_left_total = np.append(echo_left_total, echo_left)
+            #echo_right_total = np.append(echo_right_total, echo_right)
             echo_left_total = np.append(echo_left_total, echo_left)
             echo_right_total = np.append(echo_right_total, echo_right)
 
-            if nruns_idx % plot_interval == 0 and nruns_idx != 0:
+            if nruns_idx % plot_interval == 0:
 
                 elapsed = datetime.now() - time_start
 
@@ -130,11 +137,17 @@ if __name__ == '__main__':
                 echo_left_ax.set_title('{} echo runs - {}'.format(nruns_idx, str(elapsed)[:-7]))
                 echo_right_ax.set_title('{} runs/min'.format(int(nruns_idx/max(elapsed.seconds,1)*60)))
 
-                echo_right_spec.specgram(echo_right_total, n_fft, r_samp, noverlap=n_fft//2)
-                echo_right_spec.set_ylim(0, r_samp//2)
+                echo_right_spec.specgram(echo_right_total, n_fft, r_samp)
+                #echo_right_spec.set_ylim(0, r_samp//2)
                 
-                echo_left_spec.specgram(echo_left_total, n_fft, r_samp, noverlap=n_fft//2)
-                echo_right_spec.set_ylim(0, r_samp//2)       
+                echo_right_spec.set_ylim(100E3, 160E3)
+
+                
+                echo_left_spec.specgram(echo_left_total, n_fft, r_samp)
+               # echo_left_spec.set_ylim(0, r_samp//2)
+                echo_left_spec.set_ylim(100E3, 160E3)
+
+                #echo_right_spec.set_ylim(0, r_samp//2)
 
                 plt.show(block=False)
 
