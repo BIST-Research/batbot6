@@ -81,7 +81,6 @@ void emit_resonator_timer_init(void)
   
 }
 
-
 // 1Mhz sampling freq, chirp duration of 5E-3
 // sample rate = (resolution + 1 + samplen)/(ADC_GCLK / PRESCALE) = PRESCALE*(res + 1 + smp)/ADC_GCLK
 // PRESCALE = ADC_GCLK * SAMPLE_RATE /(res + 1 + samp)
@@ -93,15 +92,15 @@ const uint16_t num_samples = 4096;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
-uint32_t generate_chirp(void)
+uint32_t generate_chirp(const int f0, const int f1)
 {
 
   const double t1 = chirp_duration;
 
   const double phi = 0;
 
-  const int f0 = 150E3;
-  const int f1 = 60E3;
+  //const int f0 = 150E3;
+  //const int f1 = 60E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -152,7 +151,7 @@ const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
                                                     DMAC_BTCTRL_BEATSIZE_HWORD |
                                                     DMAC_BTCTRL_SRCINC;
 
-const uint32_t chirp_out_source_address = generate_chirp();
+uint32_t chirp_out_source_address;
 
 
 void emit_modulator_timer_init(void)
@@ -230,6 +229,11 @@ void wait_timer_init(void)
   peripheral_port_init(PORT_PMUX_PMUXE(0x5), 4, OUTPUT_PULL_DOWN, DRIVE_ON);
 }
 
+inline void state_timer_retrigger(void)
+{
+  TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
+  while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
+}
 
 void state_timer_init(void)
 {
@@ -547,11 +551,11 @@ void adc1_init(void)
 }
 
 typedef enum {IDLE, EMIT, WAIT, LISTEN} data_acquisition_state;
-typedef enum {START_JOB = 0x10, AMP_STOP = 0xff, AMP_START = 0xfe} host_command;
+typedef enum {START_JOB = 0x10, AMP_STOP = 0xff, AMP_START = 0xfe, GET_RUN_INFO = 0xfd} host_command;
 
 data_acquisition_state dstate = IDLE;
 
-void setup() 
+void setup(void) 
 {
 
 //#ifndef MODE_HARD_TRIG
@@ -559,6 +563,33 @@ void setup()
   while(!Serial);
 
 //#endif
+  int f0 = 150E3;
+  int f1 = 60E3;
+
+  if(JETSON_SERIAL.available())
+  {
+    host_command opcode = (host_command) JETSON_SERIAL.read();
+
+    if(opcode == GET_RUN_INFO)
+    {
+      int f0_recv = 0;
+      int f1_recv = 0;
+
+      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
+      {
+        f0_recv |= JETSON_SERIAL.read() << j;
+        f1_recv |= JETSON_SERIAL.read() << j;
+      }
+
+      f0 = f0_recv;
+      f1 = f1_recv;
+    }
+  }
+
+  f0 = 150E3;
+  f1 = 60E3;
+
+  chirp_out_source_address = generate_chirp(f0, f1);
 
   MCLK_init();
   GCLK_init();
@@ -573,9 +604,6 @@ void setup()
 
   state_timer_init();
   hardware_int_trigger_init();
-
-  //TC3->COUNT16.CTRLBSET.reg |= TCC_CTRLBSET_CMD_RETRIGGER;
-  //while(TC3->COUNT16.SYNCBUSY.bit.CTRLB);
 
 #endif
   //emit_modulator_timer_init();
@@ -623,8 +651,6 @@ void setup()
   ML_DMAC_CHANNEL_ENABLE(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
 
-
-
   ML_DMAC_CHANNEL_ENABLE(ADC0_DMAC_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(ADC0_DMAC_CHANNEL);
 
@@ -633,13 +659,13 @@ void setup()
 
 }
 
-volatile boolean emit_start_intflag = false;
-volatile boolean emit_stop_intflag = false;
-volatile boolean wait_stop_intflag = false;
-volatile boolean adc0_done_intflag = false;
-volatile boolean adc1_done_intflag = false;
+boolean emit_start_intflag = false;
+boolean emit_stop_intflag = false;
+boolean wait_stop_intflag = false;
+boolean adc0_done_intflag = false;
+boolean adc1_done_intflag = false;
 
-void loop() 
+void loop(void) 
 {
   
   switch(dstate)
@@ -653,8 +679,6 @@ void loop()
 
         //TCC_FORCE_RETRIGGER(TCC1);
         //TCC_sync(TCC1);
-        //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
-        //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
 
         ML_DMAC_CHANNEL_RESUME(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
 
@@ -672,12 +696,8 @@ void loop()
       if(emit_stop_intflag)
       {
 
-        //delay(1);
-
         //TCC_FORCE_STOP(TCC1);
         //TCC_sync(TCC1);
-        //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
-        //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
 
         TCC_FORCE_RETRIGGER(TCC2);
         TCC_sync(TCC2);
@@ -716,30 +736,27 @@ void loop()
 
         adc0_done_intflag = adc1_done_intflag = false;
 
-        //uint8_t buf_idx = 0;
-        //delay(100);
-        //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
-        //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
         JETSON_SERIAL.write
         (
-          reinterpret_cast<uint8_t *>(adc0_samples),
+          reinterpret_cast<uint8_t *>(&adc0_samples[0]),
           sizeof(uint8_t) * num_adc_samples
         );
 
         JETSON_SERIAL.write
         (
-          reinterpret_cast<uint8_t *>(adc0_samples[num_adc_samples/2 - 1]),
-          sizeof(uint8_t) * num_adc_samples
-        );
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(adc1_samples),
+          reinterpret_cast<uint8_t *>(&adc0_samples[num_adc_samples/2 - 1]),
           sizeof(uint8_t) * num_adc_samples
         );
 
         JETSON_SERIAL.write
         (
-          reinterpret_cast<uint8_t *>(adc1_samples[num_adc_samples/2 - 1]),
+          reinterpret_cast<uint8_t *>(&adc1_samples[0]),
+          sizeof(uint8_t) * num_adc_samples
+        );
+
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc1_samples[num_adc_samples/2 - 1]),
           sizeof(uint8_t) * num_adc_samples
         );
 
@@ -787,51 +804,6 @@ void loop()
 #endif
 
 }
-
-/*
-void DMAC_0_Handler(void){
-
-  static uint8_t count_left = 0;
-
-  if(DMAC_CH_IS_SUSP(ML_DMAC_EAR_L_CH)){
-
-    DMAC_CH_CLR_SUSP_INTFLAG(ML_DMAC_EAR_L_CH);
-
-    if(count_left >= num_pages){
-
-      count_left = 0;
-
-      ear_l_stop_intflag = true;
-
-      return;
-    }
-
-    count_left++;
-    DMAC_CH_RESUME(ML_DMAC_EAR_L_CH);
-  }
-}*/
-/*
-void DMAC_1_Handler(void){
-
-  static uint8_t count_right = 0;
-
-  if(DMAC_CH_IS_SUSP(ML_DMAC_EAR_R_CH)){
-
-    DMAC_CH_CLR_SUSP_INTFLAG(ML_DMAC_EAR_R_CH);
-
-    if(count_right >= num_pages){
-
-      count_right = 0;
-
-      ear_r_stop_intflag = true;
-
-      return;
-    }
-
-    count_right++;
-    DMAC_CH_RESUME(ML_DMAC_EAR_R_CH);
-  }
-}*/
 
 void DMAC_0_Handler(void)
 {

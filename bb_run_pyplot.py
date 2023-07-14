@@ -49,6 +49,8 @@ if __name__ == '__main__':
     f, ((echo_left_ax, echo_left_spec), (echo_right_ax, echo_right_spec)) = plt.subplots(2, 2, sharey=False)
 
     echo_left_total, echo_right_total = [],[]
+    
+    bb.send_sweep_freqs()
 
     bb.send_amp_start()
 
