@@ -88,7 +88,7 @@ void emit_resonator_timer_init(void)
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
 const int sample_freq = 400E3;
 const double chirp_duration = 2E-3;
-const uint16_t num_samples = 4096;   //Changed for serial output
+const uint16_t num_samples = 5000;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
@@ -120,7 +120,6 @@ uint32_t generate_chirp(const int f0, const int f1)
     // fill DMA buffer 
     chirp_out_buffer[i] = (uint16_t)((4096/2) * (1 + chirp * window));
   }
-  chirp_out_buffer[4095] = 0;
   return (uint32_t)&chirp_out_buffer[0] + num_samples * sizeof(uint16_t);
 }
 

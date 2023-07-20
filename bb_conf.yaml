@@ -7,7 +7,8 @@ echo:
     #serial_number: "0EAA11575351523450202020FF113038"
     #serial_number: "B2423AC95351523450202020FF0E0F43"
     #serial_number: "C896BF835351523450202020FF0E440D"
-    serial_numbers: "FBD7447F5351523450202020FF0E320A" #brunei
+    serial_numbers:
+        - "FBD7447F5351523450202020FF0E320A" #brunei
         - "27D2EA9E53544C324E202020FF18483D"
         - "A597C94353544C324E202020FF18412B"
         - "FE7A097953544C324E202020FF183D0A"
@@ -18,17 +19,18 @@ echo:
     f0: 150000
     f1: 60000
     
+    spec_color_map: 'jet'
+    
     num_adc_samples: 15000
     sampling_period: 1.2E-6
     n_fft: 256
+    n_overlap: 100
     
-    y_max: 1200
-    y_min: 0
-    
-    y_spec_max: 160000
-    y_spec_min: 50000
+    y_time_padding: 1000
+    y_spec_padding: 20000
     
     plot_interval: 1
+    calibration_interval: 10
     
     baud: 115200
 

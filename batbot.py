@@ -66,9 +66,7 @@ class BatBot:
         send_buf[1::2] = f1_split
         
         send_buf.insert(0, 0xfd)
-        
-        print(send_buf)
-        
+                
         self.echo_sercom.write(send_buf)
         
         
