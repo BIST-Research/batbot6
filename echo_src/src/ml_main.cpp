@@ -78,7 +78,7 @@ void emit_resonator_timer_init(void)
 
   TCC_channel_capture_compare_set(TCC0, JOB_STATUS_LED_CHANNEL, 15);
   peripheral_port_init(JOB_STATUS_LED_PMUX_MASK, JOB_STATUS_LED_PIN, OUTPUT_PULL_DOWN, DRIVE_ON);
-  
+
 }
 
 // 1Mhz sampling freq, chirp duration of 5E-3
@@ -86,21 +86,23 @@ void emit_resonator_timer_init(void)
 // PRESCALE = ADC_GCLK * SAMPLE_RATE /(res + 1 + samp)
 // PRESCALE = 120MHz * 1us/(12 + 1 + 2) = 8 -> ADC_CTRLA_PRESCALER_DIV8
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
-const int sample_freq = 400E3;
-const double chirp_duration = 2E-3;
-const uint16_t num_samples = 5000;   //Changed for serial output
+//const double conversion_period = 2E-6;
+//const double chirp_duration = 2E-3;
+#define CONVERSION_PERIOD (1E-6)
+#define CHIRP_DURATION (4E-3)
+const uint16_t num_samples = (uint16_t)(CHIRP_DURATION/CONVERSION_PERIOD);
 
 static uint16_t chirp_out_buffer[num_samples];
 
-uint32_t generate_chirp(const int f0, const int f1)
+uint32_t generate_chirp(int f1, int f0)
 {
 
-  const double t1 = chirp_duration;
+  const double t1 = CHIRP_DURATION;
 
   const double phi = 0;
 
-  //const int f0 = 150E3;
-  //const int f1 = 60E3;
+  //const int f0 = 180E3;
+  //const int f1 = 20E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -142,7 +144,7 @@ static volatile DmacDescriptor wb_descriptor[3] __attribute__((aligned(16)));
 
 const uint32_t chirp_out_dmac_channel_settings = DMAC_CHCTRLA_BURSTLEN_SINGLE | //check when testing evsys
                                                  DMAC_CHCTRLA_TRIGACT_BURST |
-                                                 DMAC_CHCTRLA_TRIGSRC(DAC_DMAC_ID_EMPTY_0);
+                                                 DMAC_CHCTRLA_TRIGSRC(TC3_DMAC_ID_OVF);
 
 const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
                                            //         DMAC_BTCTRL_EVOSEL_BURST | //check when testing evsys
@@ -274,6 +276,22 @@ void state_timer_init(void)
 
 }
 
+void dac_sample_timer_init(void)
+{
+
+  GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK1;
+
+  TC3->COUNT16.WAVE.reg = TC_WAVE_WAVEGEN_MFRQ;
+  TC3->COUNT16.CC[0].reg = 98;
+  while(TC3->COUNT16.SYNCBUSY.bit.CC0);
+
+  TC3->COUNT16.CTRLA.bit.ENABLE=1;
+  while(TC3->COUNT16.SYNCBUSY.bit.ENABLE);
+
+  peripheral_port_init(PORT_PMUX_PMUXE(PF_E), 7, OUTPUT_PULL_DOWN, DRIVE_ON);
+
+}
+
 /*
  *
  * The below function allows us to hook up a debounced button
@@ -332,6 +350,7 @@ void hardware_int_trigger_init(void)
 
 #define DAC_DMAC_CHANNEL 0x02
 
+// T_conv = RESOLUTION * 2 * T_GCLK = 12 * 2 * (1/12MHz) = 2us
 void dac_init(void)
 {
   // Disable DAC
@@ -558,40 +577,19 @@ void setup(void)
 {
 
 //#ifndef MODE_HARD_TRIG
-  JETSON_SERIAL.begin(115200);
-  while(!Serial);
+  //JETSON_SERIAL.begin(115200);
+  //while(!Serial);
 
 //#endif
   int f0 = 150E3;
   int f1 = 60E3;
-
-  if(JETSON_SERIAL.available())
-  {
-    host_command opcode = (host_command) JETSON_SERIAL.read();
-
-    if(opcode == GET_RUN_INFO)
-    {
-      int f0_recv = 0;
-      int f1_recv = 0;
-
-      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
-      {
-        f0_recv |= JETSON_SERIAL.read() << j;
-        f1_recv |= JETSON_SERIAL.read() << j;
-      }
-
-      f0 = f0_recv;
-      f1 = f1_recv;
-    }
-  }
-
-  f0 = 150E3;
-  f1 = 60E3;
-
+  
   chirp_out_source_address = generate_chirp(f0, f1);
 
   MCLK_init();
   GCLK_init();
+
+  dac_sample_timer_init();
 
   amp_disable();
 
@@ -781,7 +779,6 @@ void loop(void)
 
     if(opcode <= START_JOB)
     {
-
       if(dstate == IDLE && opcode == START_JOB)
       {
         emit_start_intflag = true;
@@ -789,7 +786,6 @@ void loop(void)
         job_led_toggle();
       }
     }
-
     else if(opcode == AMP_STOP)
     {
       amp_disable();
@@ -798,6 +794,20 @@ void loop(void)
     else if(opcode == AMP_START)
     {
       amp_enable();
+    }
+    else if(opcode == GET_RUN_INFO)
+    {
+
+      int f0_recv = 0;
+      int f1_recv = 0;
+
+      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
+      {
+        f0_recv |= JETSON_SERIAL.read() << j;
+        f1_recv |= JETSON_SERIAL.read() << j;
+      }
+
+      generate_chirp(f1_recv, f0_recv);
     }
   }
 #endif
