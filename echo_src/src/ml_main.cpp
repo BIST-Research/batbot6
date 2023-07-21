@@ -12,6 +12,10 @@
 #include <header/ml_ac.hpp>
 #include <wiring_private.h>
 
+#ifndef N_ADC_SAMPLES
+#define N_ADC_SAMPLES 15000
+#endif
+
 #define JETSON_SERIAL Serial
 
 #define JOB_STATUS_LED_CHANNEL                   ML_TCC0_CH3
@@ -394,7 +398,7 @@ void dac_init(void)
   );
 }
 
-const uint16_t num_adc_samples = 15000;
+//const uint16_t num_adc_samples = 15000;
 
 #define PASTE_FUSE(REG) ((*((uint32_t *) (REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
@@ -419,7 +423,7 @@ const uint16_t adc0_dmac_descriptor_settings =
 
 #define ADC0_DMAC_CHANNEL 0x00
 
-uint16_t adc0_samples[num_adc_samples];
+uint16_t adc0_samples[N_ADC_SAMPLES];
 
 
 void adc0_init(void)
@@ -436,9 +440,9 @@ void adc0_init(void)
   DMAC_descriptor_init
   (
     adc0_dmac_descriptor_settings,
-    num_adc_samples,
+    N_ADC_SAMPLES,
     (uint32_t)&ADC0->RESULT.reg,
-    (uint32_t)adc0_samples + sizeof(uint16_t) * num_adc_samples,
+    (uint32_t)adc0_samples + sizeof(uint16_t) * N_ADC_SAMPLES,
     (uint32_t)&base_descriptor[ADC0_DMAC_CHANNEL],
     &base_descriptor[ADC0_DMAC_CHANNEL]
   );
@@ -503,7 +507,7 @@ const uint16_t adc1_dmac_descriptor_settings =
 
 #define ADC1_DMAC_CHANNEL 0x01
 
-uint16_t adc1_samples[num_adc_samples];
+uint16_t adc1_samples[N_ADC_SAMPLES];
 
 void adc1_init(void)
 {
@@ -519,9 +523,9 @@ void adc1_init(void)
   DMAC_descriptor_init
   (
     adc1_dmac_descriptor_settings,
-    num_adc_samples,
+    N_ADC_SAMPLES,
     (uint32_t)&ADC1->RESULT.reg,
-    (uint32_t)adc1_samples + sizeof(uint16_t) * num_adc_samples,
+    (uint32_t)adc1_samples + sizeof(uint16_t) * N_ADC_SAMPLES,
     (uint32_t)&base_descriptor[ADC1_DMAC_CHANNEL],
     &base_descriptor[ADC1_DMAC_CHANNEL]
   );
@@ -583,7 +587,7 @@ void setup(void)
 //#endif
   int f0 = 150E3;
   int f1 = 60E3;
-  
+
   chirp_out_source_address = generate_chirp(f0, f1);
 
   MCLK_init();
@@ -733,30 +737,19 @@ void loop(void)
 
         adc0_done_intflag = adc1_done_intflag = false;
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc0_samples[0]),
-          sizeof(uint8_t) * num_adc_samples
-        );
+        uint16_t chunk_size = 2*N_ADC_SAMPLES/8;
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc0_samples[num_adc_samples/2 - 1]),
-          sizeof(uint8_t) * num_adc_samples
-        );
+        uint8_t *chunk_ptr0 = reinterpret_cast<uint8_t *>(&adc0_samples[0]);
+        for(uint16_t i=0; i < 8; i++, chunk_ptr0 += chunk_size)
+        {
+          JETSON_SERIAL.write(chunk_ptr0, sizeof(uint8_t) * chunk_size);
+        }
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc1_samples[0]),
-          sizeof(uint8_t) * num_adc_samples
-        );
-
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc1_samples[num_adc_samples/2 - 1]),
-          sizeof(uint8_t) * num_adc_samples
-        );
-
+        uint8_t *chunk_ptr1 = reinterpret_cast<uint8_t *>(&adc1_samples[0]);
+        for(uint16_t i=0; i < 8; i++, chunk_ptr1 += chunk_size)
+        {
+          JETSON_SERIAL.write(chunk_ptr1, sizeof(uint8_t) * chunk_size);
+        }
         //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
         //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
 
