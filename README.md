@@ -264,9 +264,9 @@ Plug into an ethernet cable and SSH into the batbot to start running the GPS log
 enter password
 ```cd batbot6```    
 ```nohup python3 rtk-gps/IRES_logger.py &```   
-press enter    
+press enter      
 ```nohup python3.8 bb_ctrl.py &```
-press enter
+press enter  
 make note of the two processes that are running! you will need these process ID numbers (PID) later!
 you can also find the process ID with ```ps aux | grep python``` 
 disconnect your ethernet cable, and go do your field testing!
@@ -274,6 +274,11 @@ disconnect your ethernet cable, and go do your field testing!
 finish your field testing, then reconnect the ethernet cable
 check the status of the processes by running ```ps -p <PID>```, look at the 'TIME' column and ensure that the time matches the time doing testing
 then stop everything with ```kill <PID>``` (use the PID you found earlier, ex: ```kill 8912```)
+
+Alternative nohup command:  
+```nohup python3 rtk-gps/IRES_logger.py > /dev/null 2>&1 &```  
+```nohup pyhton3.8 bb_run.py > /dev/null 2>&1 &```  
+
 
 After writing these prompts out you can exit the command line and navigate to the files on batbot6
 - open raw_data
