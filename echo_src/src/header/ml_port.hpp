@@ -4,15 +4,25 @@
  */
 #include <Arduino.h>
 
+typedef enum
+{
+    PF_A, PF_B, PF_C, PF_D, PF_E, PF_F, PF_G, 
+    PF_H, PF_I, PF_J, PF_K, PF_L, PF_M, PF_N
+} ml_port_function;
 
-typedef enum { 
+typedef enum
+{
+    PP_ODD, PP_EVEN
+} ml_port_parity;
 
+typedef enum 
+{ 
     DRIVE_OFF = 0x00, 
     DRIVE_ON = 0x01
-    
 } ml_port_drive_strength;
 
-typedef enum {
+typedef enum 
+{
 
     INPUT_STANDARD = 0x02,
     INPUT_PULL_DOWN = 0x06,
@@ -25,13 +35,22 @@ typedef enum {
 
 } ml_port_config;
 
-void peripheral_port_init(const uint8_t pmux_mask, 
-                          const uint8_t m4_pin, 
-                          const ml_port_config config, 
-                          const ml_port_drive_strength drive);
-                          
+void peripheral_port_init
+(
+    const uint8_t pmux_mask,
+    const uint8_t m4_pin, 
+    const ml_port_config config, 
+    const ml_port_drive_strength drive
+);
 
-
+void peripheral_port_init_alt
+(
+    const ml_port_function func,
+    const ml_port_parity parity,
+    const uint8_t m4_pin,
+    const ml_port_config config,
+    const ml_port_drive_strength drive
+);                    
 /*
  *
  * M4 Express pin definitions

@@ -81,27 +81,26 @@ void emit_resonator_timer_init(void)
   
 }
 
-
 // 1Mhz sampling freq, chirp duration of 5E-3
 // sample rate = (resolution + 1 + samplen)/(ADC_GCLK / PRESCALE) = PRESCALE*(res + 1 + smp)/ADC_GCLK
 // PRESCALE = ADC_GCLK * SAMPLE_RATE /(res + 1 + samp)
 // PRESCALE = 120MHz * 1us/(12 + 1 + 2) = 8 -> ADC_CTRLA_PRESCALER_DIV8
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
 const int sample_freq = 400E3;
-const double chirp_duration = 5E-3;
-const uint16_t num_samples = 4096;   //Changed for serial output
+const double chirp_duration = 2E-3;
+const uint16_t num_samples = 5000;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
-uint32_t generate_chirp(void)
+uint32_t generate_chirp(const int f0, const int f1)
 {
 
   const double t1 = chirp_duration;
 
   const double phi = 0;
 
-  const int f0 = 150E3;
-  const int f1 = 120E3;
+  //const int f0 = 150E3;
+  //const int f1 = 60E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -112,7 +111,8 @@ uint32_t generate_chirp(void)
     double t = t1 * ((double)i / num_samples);
 
     // time domain model for a bat chirp
-    double chirp = cos(phi + 2*PI * (f0 * t + k/2 + t * t));
+    //double chirp = cos(phi + 2*PI * (k * t + k/2 + t * t));
+    double chirp = cos(phi + 2*PI*((k/2)*t*t + f0*t));
 
     // Hanning window - remove harmonics from frequency distribution, leave fundemental frequencies
     double window = 0.5 * (1 - cos(2*PI * i/(num_samples - 1)));
@@ -120,8 +120,6 @@ uint32_t generate_chirp(void)
     // fill DMA buffer 
     chirp_out_buffer[i] = (uint16_t)((4096/2) * (1 + chirp * window));
   }
-  chirp_out_buffer[0] = 0;
-  chirp_out_buffer[4095] = 0;
   return (uint32_t)&chirp_out_buffer[0] + num_samples * sizeof(uint16_t);
 }
 
@@ -152,7 +150,7 @@ const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
                                                     DMAC_BTCTRL_BEATSIZE_HWORD |
                                                     DMAC_BTCTRL_SRCINC;
 
-const uint32_t chirp_out_source_address = generate_chirp();
+uint32_t chirp_out_source_address;
 
 
 void emit_modulator_timer_init(void)
@@ -215,23 +213,66 @@ void wait_timer_init(void)
 
   TCC2->WAVE.reg = TCC_WAVE_WAVEGEN_NFRQ | TCC_WAVE_POL0;
 
-  TCC_set_period(TCC2, 10);
+  TCC_set_period(TCC2, 5);
 
   TCC_SET_ONESHOT(TCC2);
   TCC_sync(TCC2);
 
   TCC_intenset(TCC2, TCC2_0_IRQn, TCC_INTENSET_OVF, 0);
 
-  TCC2->CC[0].reg |= TCC_CC_CC(5);
+  TCC2->CC[0].reg |= TCC_CC_CC(2);
 
   // GC port
   //perip2heral_port_init(PORT_PMUX_PMUXE(0x5), 28, OUTPUT_PULL_DOWN, DRIVE_ON);
-
+  // D4 --> PA14 --> periph F
   peripheral_port_init(PORT_PMUX_PMUXE(0x5), 4, OUTPUT_PULL_DOWN, DRIVE_ON);
 }
 
+inline void state_timer_retrigger(void)
+{
+  TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
+  while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
+}
 
+void state_timer_init(void)
+{
 
+  ML_SET_GCLK7_PCHCTRL(TC2_GCLK_ID);
+
+  TC2->COUNT16.CTRLA.bit.ENABLE = 0;
+  while(TC2->COUNT16.SYNCBUSY.bit.ENABLE);
+
+  //TC2->COUNT16.CTRLA.bit.SWRST = 1;
+  //while(TC2->COUNT16.SYNCBUSY.bit.SWRST);
+
+  // ((2**16 - 1) * 2)/120Meg = 1,09 ms
+  TC2->COUNT16.CTRLA.reg = 
+  (
+    TC_CTRLA_PRESCALER_DIV2 |
+    TC_CTRLA_MODE_COUNT16 |
+    TC_CTRLA_PRESCSYNC_PRESC
+  );
+
+  TC2->COUNT16.WAVE.reg |= TC_WAVE_WAVEGEN_NFRQ;
+
+  TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_ONESHOT;
+  while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
+
+  // (2**16)/2 = 32768
+  TC2->COUNT16.CC[0].reg |= TC_COUNT16_CC_CC(32768);
+  while(TC2->COUNT16.SYNCBUSY.bit.CC0);
+
+  TC2->COUNT16.CTRLA.bit.ENABLE = 1;
+  while(TC2->COUNT16.SYNCBUSY.bit.ENABLE);
+
+  TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_STOP;
+  while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
+
+  // D7 --> PA18 --> periph E
+  //peripheral_port_init_alt(PF_E, PP_EVEN, 7, OUTPUT_PULL_DOWN, DRIVE_ON);
+  peripheral_port_init(PORT_PMUX_PMUXE(PF_E), 0, OUTPUT_PULL_DOWN, DRIVE_ON);
+
+}
 
 /*
  *
@@ -259,7 +300,7 @@ void hardware_int_trigger_init(void)
     ML_AC_SWRST();
     AC_sync();
 
-    AC->COMPCTRL[AC_CHANNEL].reg |= (AC_COMPCTRL_MUXPOS_PIN0|
+    AC->COMPCTRL[AC_CHANNEL].reg |= (AC_COMPCTRL_MUXPOS_PIN3|
                                      AC_COMPCTRL_MUXNEG_GND  | 
                                      AC_COMPCTRL_SPEED_HIGH  |
                                      AC_COMPCTRL_HYST_HYST150|
@@ -275,7 +316,8 @@ void hardware_int_trigger_init(void)
 
     AC->INTENSET.reg |= AC_INTENSET_COMP0;
 
-    peripheral_port_init(ML_M4E_AC_AIN0_PMUX_msk, ML_M4E_AC_AIN0_PIN, ANALOG, DRIVE_OFF);
+    //peripheral_port_init(ML_M4E_AC_AIN0_PMUX_msk, ML_M4E_AC_AIN0_PIN, ANALOG, DRIVE_OFF);
+    peripheral_port_init(PORT_PMUX_PMUXO(PF_B), 2, ANALOG, DRIVE_OFF);
 
     NVIC_SetPriority(AC_IRQn, 0);
     NVIC_EnableIRQ(AC_IRQn);
@@ -333,7 +375,7 @@ void dac_init(void)
   );
 }
 
-const uint16_t num_adc_samples = 20000;
+const uint16_t num_adc_samples = 15000;
 
 #define PASTE_FUSE(REG) ((*((uint32_t *) (REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
@@ -359,6 +401,7 @@ const uint16_t adc0_dmac_descriptor_settings =
 #define ADC0_DMAC_CHANNEL 0x00
 
 uint16_t adc0_samples[num_adc_samples];
+
 
 void adc0_init(void)
 {
@@ -506,10 +549,46 @@ void adc1_init(void)
   ADC_sync(ADC1);
 }
 
-void setup() 
+typedef enum {IDLE, EMIT, WAIT, LISTEN} data_acquisition_state;
+typedef enum {START_JOB = 0x10, AMP_STOP = 0xff, AMP_START = 0xfe, GET_RUN_INFO = 0xfd} host_command;
+
+data_acquisition_state dstate = IDLE;
+
+void setup(void) 
 {
-  //JETSON_SERIAL.begin(115200);
-  //while(!Serial);
+
+//#ifndef MODE_HARD_TRIG
+  JETSON_SERIAL.begin(115200);
+  while(!Serial);
+
+//#endif
+  int f0 = 150E3;
+  int f1 = 60E3;
+
+  if(JETSON_SERIAL.available())
+  {
+    host_command opcode = (host_command) JETSON_SERIAL.read();
+
+    if(opcode == GET_RUN_INFO)
+    {
+      int f0_recv = 0;
+      int f1_recv = 0;
+
+      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
+      {
+        f0_recv |= JETSON_SERIAL.read() << j;
+        f1_recv |= JETSON_SERIAL.read() << j;
+      }
+
+      f0 = f0_recv;
+      f1 = f1_recv;
+    }
+  }
+
+  f0 = 150E3;
+  f1 = 60E3;
+
+  chirp_out_source_address = generate_chirp(f0, f1);
 
   MCLK_init();
   GCLK_init();
@@ -520,9 +599,14 @@ void setup()
 
   //emit_resonator_timer_init();
 
+#ifdef MODE_HARD_TRIG
+
+  state_timer_init();
+  hardware_int_trigger_init();
+
+#endif
   //emit_modulator_timer_init();
   dac_init();
-
 
   wait_timer_init();
 
@@ -530,7 +614,6 @@ void setup()
 
   adc0_init();
   adc1_init();
-
 
   //TCC_ENABLE(TCC0);
   //TCC_sync(TCC0);
@@ -562,13 +645,10 @@ void setup()
   TCC_FORCE_STOP(TCC2);
   TCC_sync(TCC2);
 
-  
   ML_DMAC_ENABLE();
 
   ML_DMAC_CHANNEL_ENABLE(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(DMAC_EMIT_MODULATOR_TIMER_CHANNEL);
-
-
 
   ML_DMAC_CHANNEL_ENABLE(ADC0_DMAC_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(ADC0_DMAC_CHANNEL);
@@ -576,32 +656,15 @@ void setup()
   ML_DMAC_CHANNEL_ENABLE(ADC1_DMAC_CHANNEL);
   ML_DMAC_CHANNEL_SUSPEND(ADC1_DMAC_CHANNEL);
 
-  //DMAC_CH_ENABLE(ML_DMAC_EAR_R_CH);
-  //DMAC_CH_ENABLE(ML_DMAC_EAR_L_CH);
-
-  //DMAC_CH_SUSPEND(ML_DMAC_PLASMA_CH);
-  //DMAC_CH_SUSPEND(ML_DMAC_EAR_R_CH);
- // DMAC_CH_SUSPEND(ML_DMAC_EAR_L_CH);
-
-
-  //hardware_int_trigger_init();
-
-
-
 }
 
-typedef enum {IDLE, EMIT, WAIT, LISTEN} data_acquisition_state;
-typedef enum {START_JOB = 0x10, AMP_STOP = 0xff, AMP_START = 0xfe} host_command;
+boolean emit_start_intflag = false;
+boolean emit_stop_intflag = false;
+boolean wait_stop_intflag = false;
+boolean adc0_done_intflag = false;
+boolean adc1_done_intflag = false;
 
-data_acquisition_state dstate = IDLE;
-
-volatile boolean emit_start_intflag = false;
-volatile boolean emit_stop_intflag = false;
-volatile boolean wait_stop_intflag = false;
-volatile boolean adc0_done_intflag = false;
-volatile boolean adc1_done_intflag = false;
-
-void loop() 
+void loop(void) 
 {
   
   switch(dstate)
@@ -632,8 +695,6 @@ void loop()
       if(emit_stop_intflag)
       {
 
-        delay(1);
-
         //TCC_FORCE_STOP(TCC1);
         //TCC_sync(TCC1);
 
@@ -654,8 +715,8 @@ void loop()
       if(wait_stop_intflag)
       {
 
-        ML_DMAC_CHANNEL_RESUME(0);
-        ML_DMAC_CHANNEL_RESUME(1);
+        ML_DMAC_CHANNEL_RESUME(ADC0_DMAC_CHANNEL);
+        ML_DMAC_CHANNEL_RESUME(ADC1_DMAC_CHANNEL);
 
         dstate = LISTEN;
 
@@ -674,24 +735,32 @@ void loop()
 
         adc0_done_intflag = adc1_done_intflag = false;
 
-        //uint8_t buf_idx = 0;
-        //delay(100);
-  
-        for(int i=0; i < num_adc_samples; i++)
-        {
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc0_samples[0]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-          JETSON_SERIAL.write(adc0_samples[i] & 0x00ff);
-          JETSON_SERIAL.write((adc0_samples[i] & 0xff00) >> 8);
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc0_samples[num_adc_samples/2 - 1]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-        }
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc1_samples[0]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-        for(int i=0; i < num_adc_samples; i++)
-        {
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc1_samples[num_adc_samples/2 - 1]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-          JETSON_SERIAL.write(adc1_samples[i] & 0x00ff);
-          JETSON_SERIAL.write((adc1_samples[i] & 0xff00) >> 8);
-
-        }
+        //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
+        //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
 
         job_led_toggle();
 
@@ -702,6 +771,8 @@ void loop()
 
     }
   }
+
+#ifndef MODE_HARD_TRIG
 
   if(JETSON_SERIAL.available())
   {
@@ -729,53 +800,9 @@ void loop()
       amp_enable();
     }
   }
+#endif
 
 }
-
-/*
-void DMAC_0_Handler(void){
-
-  static uint8_t count_left = 0;
-
-  if(DMAC_CH_IS_SUSP(ML_DMAC_EAR_L_CH)){
-
-    DMAC_CH_CLR_SUSP_INTFLAG(ML_DMAC_EAR_L_CH);
-
-    if(count_left >= num_pages){
-
-      count_left = 0;
-
-      ear_l_stop_intflag = true;
-
-      return;
-    }
-
-    count_left++;
-    DMAC_CH_RESUME(ML_DMAC_EAR_L_CH);
-  }
-}*/
-/*
-void DMAC_1_Handler(void){
-
-  static uint8_t count_right = 0;
-
-  if(DMAC_CH_IS_SUSP(ML_DMAC_EAR_R_CH)){
-
-    DMAC_CH_CLR_SUSP_INTFLAG(ML_DMAC_EAR_R_CH);
-
-    if(count_right >= num_pages){
-
-      count_right = 0;
-
-      ear_r_stop_intflag = true;
-
-      return;
-    }
-
-    count_right++;
-    DMAC_CH_RESUME(ML_DMAC_EAR_R_CH);
-  }
-}*/
 
 void DMAC_0_Handler(void)
 {
@@ -837,11 +864,9 @@ void AC_Handler(void)
 
   ML_AC_CLR_COMP0_INTFLAG();
   
-  if(ac_trig_cnt != 0 && ac_trig_cnt < 2)
+  if(ac_trig_cnt != 0 && dstate == IDLE)
   {
-
       emit_start_intflag = true;
-
   } 
   
   ac_trig_cnt++;
