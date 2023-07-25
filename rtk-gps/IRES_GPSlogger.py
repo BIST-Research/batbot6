@@ -7,6 +7,18 @@ import datetime
 import serial
 import csv
 import os
+import sys
+import signal
+
+
+# signal handling function for shutting down process
+def signal_handler(sig, frame):
+    # Close the file before exiting
+    file.close()
+    sys.exit(0)
+    
+# stages the shutting down process
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 # connect via serial port (if you are on a PC, you can check this in device manager)
