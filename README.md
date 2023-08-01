@@ -284,3 +284,43 @@ After writing these prompts out you can exit the command line and navigate to th
 - open raw_data
 - open logged .csv file to see longitude and latitude coordinates
 - then relax
+
+## Recommend Field Work Flow
+Once you have everything working, it's time to hit the field. Here's how we recommend doing everything (a procedure birthed from our mistakes). 
+#### What To Bring
+- LiPo battery (x2), ethernet cable, batbot w/ all accessories
+#### Procedure
+1. Charge LiPo batteries the night before (1 battery ~ 30 mins)
+2. Arrive on-site and power up the batbot
+3. Connect ethernet cable and SSH in (Bitvise is great for this)
+4. Clear out old data files --> check /data_dst and /raw_data folders and empty them (open a new SFPT window in Bitvise)
+5. Reset the Jetson clock so your data files are named correctly. Open a terminal and run:
+- ```sudo date 072512342023.30``` to set to July 25th 2023 at 12:34 and 30 seconds
+- ```sudo hwclock systohc``` to also set the hardware clock to that
+6. Test to ensure GPS data logger is working. Open a terminal and run:
+- ```cd batbot6```
+- ```python rtk_gps/IRES_GPSlogger.py```
+- allow it to run for 10 seconds or so (we get GPS at 0.5Hz typically, check the Ublox module for a blinking light to confirm it has a lock).
+- kill it with ctrl+c, then check /raw_data for the CSV file. If Lat/Long coordinates are logging - this is working.
+7. Test to ensure Sonar is working. Open a terminal and run:
+- ```cd batbot6```
+- ```python3.8 bb_run_production.py```
+- it should connect to the microcontroller (this is the most important part), and (maybe) display the number of chirps that have been sent
+- kill it with ctrl+x, then check /data_dst for a folder with binary files. If binaries are there, and microcontroller connected successfully, and you audibly hear chirps coming out of the speakers - this is working.
+8. Run the GPS logger and Sonar chirps indefinitely (we run these and it disconnects the process from the terminal itself)
+- open a terminal and run:
+- ```cd batbot6```
+- ```nohup python rtk_gps/IRES_GPSlogger.py &```
+- ```ok``` (seems silly, but hitting 'enter' can kill the above process)
+- ```nohup python3.8 bb_run_production.py &``` (you should hear chirps!)
+- ```ok```
+- ```ps aux | grep python``` and look for the two python processes you just started in the list (if they're not there, something went wrong)
+9. Close the terminal, break the SSH connection, remove the Ethernet cable, put the cover on the batbot, and proceed! The chirps should still be audible. Now go, run free, and gather your data! Mark the time you start and the time you end using your phone.
+10. When data is acquired and you're ready to end the test, reconnect the Ethernet and SSH in
+11. Kill the processes by opening a terminal and running:
+- ```ps aux | grep python``` and look for the process id (PID) of the two python processes we want to kill
+- ```kill <PID>``` kill the GPS logger (remove the <>, for example `kill 7789`)
+- ```kill <PID>``` kill the Sonar chirps
+12. Offload your data
+- use a SFTP window in Bitvise to transfer the files from the sonarbot to your native PC
+13. Shutdown the sonarbot, disconnect cables, return to lab.
