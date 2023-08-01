@@ -306,7 +306,7 @@ Once you have everything working, it's time to hit the field. Here's how we reco
 - ```cd batbot6```
 - ```python3.8 bb_run_production.py```
 - it should connect to the microcontroller (this is the most important part), and (maybe) display the number of chirps that have been sent
-- kill it with ctrl+x, then check /data_dst for a folder with binary files. If binaries are there, and microcontroller connected successfully, and you audibly hear chirps coming out of the speakers - this is working.
+- kill it with ctrl+c, then check /data_dst for a folder with binary files. If binaries are there, and microcontroller connected successfully, and you audibly hear chirps coming out of the speakers - this is working.
 8. Run the GPS logger and Sonar chirps indefinitely (we run these and it disconnects the process from the terminal itself)
 - open a terminal and run:
 - ```cd batbot6```
