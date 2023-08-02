@@ -1,14 +1,11 @@
 data_directory: "data_dst"
 
 echo:
-    #serial_number: "27D2EA9E53544C324E202020FF18483D"
-    #serial_number: "A597C94353544C324E202020FF18412B"
-    #serial_number: "FE7A097953544C324E202020FF183D0A"
-    #serial_number: "0EAA11575351523450202020FF113038"
-    #serial_number: "B2423AC95351523450202020FF0E0F43"
-    #serial_number: "C896BF835351523450202020FF0E440D"
     serial_numbers:
-        - "FBD7447F5351523450202020FF0E320A" #brunei
+        - "FBD7447F5351523450202020FF0E320A" #brunei original
+        - "3BF9331F5351523450202020FF111D35" #brunei 50ms
+        - "E23032655351523450202020FF0E3B0C" #brunei 40ms
+        - "D9E57EA65351523450202020FF103B42" #brunei 20ms
         - "27D2EA9E53544C324E202020FF18483D"
         - "A597C94353544C324E202020FF18412B"
         - "FE7A097953544C324E202020FF183D0A"
@@ -21,18 +18,21 @@ echo:
     
     spec_color_map: 'jet'
     
-    num_adc_samples: 15000
+    num_adc_samples: 16000
+
     sampling_period: 1.2E-6
-    n_fft: 256
-    n_overlap: 100
-    
-    y_time_padding: 1000
-    y_spec_padding: 20000
-    
-    plot_interval: 1
-    calibration_interval: 10
-    
     baud: 115200
+    
+    plot_settings:
+        plot_interval: 1
+        calibration_interval: 50
+        y_amplitude_padding: 1000
+        y_spec_padding: 50000
+        spec_color_map: 'jet'
+    
+    fft_settings:
+        NFFT: 256
+        noverlap: 100
 
 force:
     serial_number: "A597C94353544C324E202020FF18412B"
