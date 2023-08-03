@@ -313,7 +313,7 @@ Once you have everything working, it's time to hit the field. Here's how we reco
 - ```python3.8 bb_run_production.py```
 - it should connect to the microcontroller (this is the most important part), and (maybe) display the number of chirps that have been sent
 - kill it with ctrl+c, then check /data_dst for a folder with binary files. If binaries are there, and microcontroller connected successfully, and you audibly hear chirps coming out of the speakers - this is working.
-9. Remove the test data files that were just created from 6. and 7.
+9. Remove the test data files that were just created from 7. and 8.
 - using Bitvise SFTP window, delete files from /raw_data (GPS .csv) and /data_dst (Sonar .bin)
 10. Run the GPS logger and Sonar chirps indefinitely (we run these and it disconnects the process from the terminal itself)
 - open a terminal and run:
