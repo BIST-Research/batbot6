@@ -297,11 +297,17 @@ Once you have everything working, it's time to hit the field. Here's how we reco
 5. Reset the Jetson clock so your data files are named correctly. Open a terminal and run:
 - ```sudo date 072512342023.30``` to set to July 25th 2023 at 12:34 and 30 seconds
 - ```sudo hwclock systohc``` to also set the hardware clock to that
-6. Test to ensure GPS data logger is working. Open a terminal and run:
+6. Test to ensure GPS data logger is working. We need to figure out which serial port the jetson assigned to the arduino.
+- the serial port will be in the form /dev/ttyACMX, with X = 0,1,2, etc. It is most likely /dev/ttyACM0 or /dev/ttyACM1
+- we are going to connect to each serial port and print out the results, we want a bunch of numbers (GPS coords) separate by commas
+- ```screen /dev/ttyACM0 115200``` --> does this give you anything? if so, use this port! if it doesn't show anything, try the next command. exit with ctrl+a+d
+- ```screen /dev/ttyACM1 115200``` --> does this give you anything? if so, use this port! if it doesn't, try the next command ACM2, ACM3, ... exit with ctrl+a+d
+- once you've determined the proper serial port, open up /batbot6/rtk-gps/IRES_GPSlogger.py and update the serial port (should be in the first few lines)
+6.5. With the serial port set, run the IRES GPS logger to ensure proper functionality
 - ```cd batbot6```
 - ```python rtk_gps/IRES_GPSlogger.py```
-- allow it to run for 10 seconds or so (we get GPS at 0.5Hz typically, check the Ublox module for a blinking light to confirm it has a lock).
-- kill it with ctrl+c, then check /raw_data for the CSV file. If Lat/Long coordinates are logging - this is working.
+- allow it to run for 10 seconds or so (we get GPS at 0.5Hz typically, also check the Ublox module for a blinking light to confirm it has a GPS lock).
+- kill it with ctrl+c, then check /raw_data for the CSV file. If Lat/Long coordinates are logging - this is working. there's also a ton of feedback from the python script in the terminal
 7. Test to ensure Sonar is working. Open a terminal and run:
 - ```cd batbot6```
 - ```python3.8 bb_run_production.py```
