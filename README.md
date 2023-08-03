@@ -308,6 +308,7 @@ Once you have everything working, it's time to hit the field. Here's how we reco
 - ```python rtk_gps/IRES_GPSlogger.py```
 - allow it to run for 10 seconds or so (we get GPS at 0.5Hz typically, also check the Ublox module for a blinking light to confirm it has a GPS lock).
 - kill it with ctrl+c, then check /raw_data for the CSV file. If Lat/Long coordinates are logging - this is working. there's also a ton of feedback from the python script in the terminal
+- if you get errors regarding connection issues, try switching the /dev/ttyACMX as well as unplugging and replugging the USB cable that connects the Arduino to the Jetson
 8. Test to ensure Sonar is working. Open a terminal and run:
 - ```cd batbot6```
 - ```python3.8 bb_run_production.py```
