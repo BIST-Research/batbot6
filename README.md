@@ -300,8 +300,8 @@ Once you have everything working, it's time to hit the field. Here's how we reco
 6. (optional if GPS logger is giving you trouble) Test to ensure GPS data logger is working. We need to figure out which serial port the jetson assigned to the arduino.
 - the serial port will be in the form /dev/ttyACMX, with X = 0,1,2, etc. It is most likely /dev/ttyACM0 or /dev/ttyACM1
 - we are going to connect to each serial port and print out the results, we want a bunch of numbers (GPS coords) separate by commas
-- ```screen /dev/ttyACM0 115200``` --> does this give you anything? if so, use this port! if it doesn't show anything, try the next command. exit with ctrl+a+d
-- ```screen /dev/ttyACM1 115200``` --> does this give you anything? if so, use this port! if it doesn't, try the next command ACM2, ACM3, ... exit with ctrl+a+d
+- ```screen /dev/ttyACM0 115200``` --> does this give you anything? if so, use this port! if it doesn't show anything, try the next command. exit with ctrl+a+d (ctrl+a first, then hit the d). ACM0 is typically for the microcontoller to make the chirps, so it is unlikely this one gives you GPS data. 
+- ```screen /dev/ttyACM1 115200``` --> does this give you anything? if so, use this port! if it doesn't, try the next command ACM2, ACM3, ... exit with ctrl+a+d (ctrl+a first, then hit the d). ACM1 is typically for the GPS. 
 - once you've determined the proper serial port, open up /batbot6/rtk-gps/IRES_GPSlogger.py and update the serial port (should be in the first few lines)
 - unplug and replug the USB port from the Jetson that connects to the arduino (the USB-A from the jetson side specifically)  
 7. With the serial port set, run the IRES GPS logger to ensure proper functionality
