@@ -288,48 +288,50 @@ After writing these prompts out you can exit the command line and navigate to th
 ## Recommend Field Work Flow
 Once you have everything working, it's time to hit the field. Here's how we recommend doing everything (a procedure birthed from our mistakes). 
 #### What To Bring
-- LiPo battery (x2), ethernet cable, batbot w/ all accessories
+- LiPo battery (x2), ethernet cable, batbot w/ all accessories, multimeter (optional)
 #### Procedure
-1. Charge LiPo batteries the night before (1 battery ~ 30 mins)
+1. Charge LiPo batteries the night before (1 battery ~ 60 mins)
 2. Arrive on-site and power up the batbot
 3. Connect ethernet cable and SSH in (Bitvise is great for this)
 4. Clear out old data files --> check /data_dst and /raw_data folders and empty them (open a new SFPT window in Bitvise)
 5. Reset the Jetson clock so your data files are named correctly. Open a terminal and run:
-- ```sudo date 072512342023.30``` to set to July 25th 2023 at 12:34 and 30 seconds
-- ```sudo hwclock systohc``` to also set the hardware clock to that
-6. Test to ensure GPS data logger is working. We need to figure out which serial port the jetson assigned to the arduino.
+- ```sudo date 072512342023.30``` to set to July 25th 2023 at 12:34 and 30 seconds (DDMMHHMMYYYY.SS)
+- ```sudo hwclock --systohc``` to also set the hardware clock to that
+6. (optional if GPS logger is giving you trouble) Test to ensure GPS data logger is working. We need to figure out which serial port the jetson assigned to the arduino.
 - the serial port will be in the form /dev/ttyACMX, with X = 0,1,2, etc. It is most likely /dev/ttyACM0 or /dev/ttyACM1
 - we are going to connect to each serial port and print out the results, we want a bunch of numbers (GPS coords) separate by commas
 - ```screen /dev/ttyACM0 115200``` --> does this give you anything? if so, use this port! if it doesn't show anything, try the next command. exit with ctrl+a+d
 - ```screen /dev/ttyACM1 115200``` --> does this give you anything? if so, use this port! if it doesn't, try the next command ACM2, ACM3, ... exit with ctrl+a+d
-- once you've determined the proper serial port, open up /batbot6/rtk-gps/IRES_GPSlogger.py and update the serial port (should be in the first few lines)  
+- once you've determined the proper serial port, open up /batbot6/rtk-gps/IRES_GPSlogger.py and update the serial port (should be in the first few lines)
+- unplug and replug the USB port from the Jetson that connects to the arduino (the USB-A from the jetson side specifically)  
 7. With the serial port set, run the IRES GPS logger to ensure proper functionality
 - ```cd batbot6```
-- ```python rtk_gps/IRES_GPSlogger.py```
+- ```python3 rtk-gps/IRES_GPSlogger.py```
 - allow it to run for 10 seconds or so (we get GPS at 0.5Hz typically, also check the Ublox module for a blinking light to confirm it has a GPS lock).
 - kill it with ctrl+c, then check /raw_data for the CSV file. If Lat/Long coordinates are logging - this is working. there's also a ton of feedback from the python script in the terminal
 - if you get errors regarding connection issues, try switching the /dev/ttyACMX as well as unplugging and replugging the USB cable that connects the Arduino to the Jetson
 8. Test to ensure Sonar is working. Open a terminal and run:
 - ```cd batbot6```
 - ```python3.8 bb_run_production.py```
-- it should connect to the microcontroller (this is the most important part), and (maybe) display the number of chirps that have been sent
+- it should display a successful connection to the microcontroller (this is the most important part), and (maybe) display the number of chirps that have been sent
 - kill it with ctrl+c, then check /data_dst for a folder with binary files. If binaries are there, and microcontroller connected successfully, and you audibly hear chirps coming out of the speakers - this is working.
 9. Remove the test data files that were just created from 7. and 8.
-- using Bitvise SFTP window, delete files from /raw_data (GPS .csv) and /data_dst (Sonar .bin)
-10. Run the GPS logger and Sonar chirps indefinitely (we run these and it disconnects the process from the terminal itself)
+- using Bitvise SFTP window, delete files from /raw_data (GPS .csv) and /data_dst (Sonar folder of .bin's)
+10. Run the GPS logger and Sonar chirps indefinitely (we run these in a way disconnects the process from the terminal itself)
 - open a terminal and run:
 - ```cd batbot6```
-- ```nohup python rtk_gps/IRES_GPSlogger.py &```
-- ```ok``` (seems silly, but hitting 'enter' can kill the above process)
+- ```nohup python3 rtk-gps/IRES_GPSlogger.py &```
+- close the terminal. open a new terminal and run:
+- ```cd batbot6```
 - ```nohup python3.8 bb_run_production.py &``` (you should hear chirps!)
-- ```ok```
-- ```ps aux | grep python``` and look for the two python processes you just started in the list (if they're not there, something went wrong)
-11. Close the terminal, break the SSH connection, remove the Ethernet cable, put the cover on the batbot, and proceed! The chirps should still be audible. Now go, run free, and gather your data! Mark the time you start and the time you end using your phone.
-12. When data is acquired and you're ready to end the test, reconnect the Ethernet and SSH in
+- close the terminal. open a new terminal and run:
+- ```ps aux | grep python``` and look for the two python processes you just started in the list (if they're not there, something went wrong! try to restart the missing processes)
+11. If the two processes are running well and you hear chirps, then close the terminal(s), break the SSH connection, remove the Ethernet cable, put the cover on the batbot, and proceed! The chirps should still be audible. Now go, run free, and gather your data! Mark the time you start and the time you end using your phone.
+12. When data is acquired and you're ready to end the test, reconnect the Ethernet and SSH in with bitvise
 13. Kill the processes by opening a terminal and running:
 - ```ps aux | grep python``` and look for the process id (PID) of the two python processes we want to kill
 - ```kill <PID>``` kill the GPS logger (remove the <>, for example `kill 7789`)
 - ```kill <PID>``` kill the Sonar chirps
 14. Offload your data
-- use a SFTP window in Bitvise to transfer the files from the sonarbot to your native PC
-15. Shutdown the sonarbot, disconnect cables, return to lab.
+- use a SFTP window in Bitvise to transfer the files from the sonarbot to your native PC. grab the .csv from /raw_data and the folder of bin files from /data_dst
+15. Shutdown the sonarbot, disconnect cables, return to lab, upload data to google drive or other permanent location. 
