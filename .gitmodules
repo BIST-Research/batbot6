@@ -1,0 +1,3 @@
+[submodule "SonarLocalization"]
+	path = SonarLocalization
+	url = https://github.com/philparisi/sonarlocalization
