@@ -1,3 +1,8 @@
+#
+# Date created: 4/3/23
+# Author: Ben Westcott
+#
+
 import serial
 import serial.tools.list_ports
 import logging
