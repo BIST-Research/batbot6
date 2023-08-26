@@ -1,3 +1,8 @@
+#
+# Date created: 4/3/23
+# Author: Ben Westcott
+#
+
 from batbot import BatBot
 from batbot import AsyncWrite
 from batbot import get_timestamp_now
