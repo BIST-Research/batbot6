@@ -1,3 +1,7 @@
+#
+# Date created: 4/3/23
+# Author: Ben Westcott
+#
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gs
 import matplotlib.colors as colors
