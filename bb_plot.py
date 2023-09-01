@@ -7,6 +7,8 @@ import matplotlib.gridspec as gs
 import matplotlib.colors as colors
 import matplotlib.ticker as mticker
 from matplotlib import mlab as mlab
+from scipy import signal
+
 import numpy as np
 import yaml
 import logging
@@ -21,6 +23,9 @@ class BBPlotter:
         self.echo_num_adc_samples = echo_book['num_adc_samples']
         self.echo_f0 = echo_book['f0']
         self.echo_f1 = echo_book['f1']
+        
+        
+        self.sos = signal.butter(4, [self.echo_f1 - 2E3, self.echo_f0 + 2E3], 'bp', fs = self.echo_Fs, output = 'sos')
         
         plot_settings = echo_book['plot_settings']
         
@@ -116,13 +121,13 @@ class BBPlotter:
         self.adc0_amplitude_ax.plot(data[0])
         self.adc1_amplitude_ax.plot(data[1])
         
-        s0, f0, t0 = mlab.specgram(data[0], NFFT=self.echo_NFFT, Fs=self.echo_Fs, noverlap=self.echo_noverlap)
+        s0, f0, t0 = mlab.specgram(signal.sosfilt(self.sos, data[0]), NFFT=self.echo_NFFT, Fs=self.echo_Fs, noverlap=self.echo_noverlap)
         
         pcm0 = self.adc0_spec_ax.pcolormesh(t0, f0, s0, cmap=self.echo_spec_cmap, shading='auto', norm=colors.LogNorm(vmin=self.calib_s0.min(), vmax=self.calib_s0.max()))
         
         self.figure.colorbar(pcm0, cax=self.adc0_spec_cax)
         
-        s1, f1, t1 = mlab.specgram(data[1], NFFT=self.echo_NFFT, Fs=self.echo_Fs, noverlap=self.echo_noverlap)
+        s1, f1, t1 = mlab.specgram(signal.sosfilt(self.sos, data[1]), NFFT=self.echo_NFFT, Fs=self.echo_Fs, noverlap=self.echo_noverlap)
         
         pcm1 = self.adc1_spec_ax.pcolormesh(t1, f1, s1, cmap=self.echo_spec_cmap, shading='auto', norm=colors.LogNorm(vmin=self.calib_s1.min(), vmax=self.calib_s1.max()))
         

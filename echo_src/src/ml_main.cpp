@@ -88,7 +88,7 @@ void emit_resonator_timer_init(void)
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
 const int sample_freq = 400E3;
 const double chirp_duration = 2E-3;
-const uint16_t num_samples = 5000;   //Changed for serial output
+const uint16_t num_samples = 4096;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
@@ -120,7 +120,7 @@ uint32_t generate_chirp(const int f0, const int f1)
     // fill DMA buffer 
     chirp_out_buffer[i] = (uint16_t)((4096/2) * (1 + chirp * window));
   }
-  chirp_out_buffer[4095] = 0;
+  //chirp_out_buffer[4095] = 0;
   return (uint32_t)&chirp_out_buffer[0] + num_samples * sizeof(uint16_t);
 }
 
@@ -143,7 +143,7 @@ static volatile DmacDescriptor wb_descriptor[3] __attribute__((aligned(16)));
 
 const uint32_t chirp_out_dmac_channel_settings = DMAC_CHCTRLA_BURSTLEN_SINGLE | //check when testing evsys
                                                  DMAC_CHCTRLA_TRIGACT_BURST |
-                                                 DMAC_CHCTRLA_TRIGSRC(DAC_DMAC_ID_EMPTY_0);
+                                                 DMAC_CHCTRLA_TRIGSRC(TC3_DMAC_ID_OVF);
 
 const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
                                            //         DMAC_BTCTRL_EVOSEL_BURST | //check when testing evsys
@@ -196,6 +196,38 @@ void emit_modulator_timer_init(void)
     &base_descriptor[DMAC_EMIT_MODULATOR_TIMER_CHANNEL]
   );
 }
+
+void dac_sample_timer_init(void)
+{
+
+  GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK4;
+
+  TC3->COUNT8.CTRLA.bit.ENABLE = 0x00;
+  while(TC3->COUNT8.SYNCBUSY.bit.ENABLE != 0U);
+
+  TC3->COUNT8.CTRLA.bit.SWRST = 0x01;
+  while(TC3->COUNT8.SYNCBUSY.bit.SWRST);
+
+  TC3->COUNT8.CTRLA.reg = 
+  (
+    TC_CTRLA_MODE_COUNT8 |
+    TC_CTRLA_PRESCSYNC_PRESC |
+    TC_CTRLA_PRESCALER_DIV1 
+  );
+
+  TC3->COUNT8.WAVE.reg = TC_WAVE_WAVEGEN_MFRQ;
+  //TC3->COUNT8.PER.reg = TC_COUNT8_PER_PER(48);
+  TC3->COUNT8.CC[0].reg = 5;
+
+  while(TC3->COUNT8.SYNCBUSY.bit.CC0);
+
+  TC3->COUNT8.CTRLA.bit.ENABLE=1;
+  while(TC3->COUNT8.SYNCBUSY.bit.ENABLE);
+
+  peripheral_port_init(PORT_PMUX_PMUXE(PF_E), 7, OUTPUT_PULL_DOWN, DRIVE_ON);
+
+}
+
 
 void wait_timer_init(void)
 {
@@ -406,7 +438,7 @@ uint16_t adc0_samples[num_adc_samples];
 
 void adc0_init(void)
 {
-  ML_SET_GCLK1_PCHCTRL(ADC0_GCLK_ID);
+  ML_SET_GCLK7_PCHCTRL(ADC0_GCLK_ID);
 
   DMAC_channel_init
   (
@@ -489,7 +521,7 @@ uint16_t adc1_samples[num_adc_samples];
 
 void adc1_init(void)
 {
-  ML_SET_GCLK1_PCHCTRL(ADC1_GCLK_ID);
+  ML_SET_GCLK7_PCHCTRL(ADC1_GCLK_ID);
 
   DMAC_channel_init
   (
@@ -560,36 +592,15 @@ void setup(void)
 
 //#ifndef MODE_HARD_TRIG
   JETSON_SERIAL.begin(115200);
-  while(!Serial);
+  //while(!Serial);
 
 //#endif
-  int f0 = 150E3;
-  int f1 = 60E3;
 
-  if(JETSON_SERIAL.available())
-  {
-    host_command opcode = (host_command) JETSON_SERIAL.read();
-
-    if(opcode == GET_RUN_INFO)
-    {
-      int f0_recv = 0;
-      int f1_recv = 0;
-
-      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
-      {
-        f0_recv |= JETSON_SERIAL.read() << j;
-        f1_recv |= JETSON_SERIAL.read() << j;
-      }
-
-      f0 = f0_recv;
-      f1 = f1_recv;
-    }
-  }
-
-  f0 = 150E3;
-  f1 = 10E3;
+  int f0 = 100E3;
+  int f1 = 20E3;
 
   chirp_out_source_address = generate_chirp(f0, f1);
+
 
   MCLK_init();
   GCLK_init();
@@ -610,6 +621,7 @@ void setup(void)
   dac_init();
 
   wait_timer_init();
+  dac_sample_timer_init();
 
   job_led_toggle();
 
@@ -799,6 +811,20 @@ void loop(void)
     else if(opcode == AMP_START)
     {
       amp_enable();
+    }
+    else if(opcode == GET_RUN_INFO)
+    {
+
+      int f0_recv = 0;
+      int f1_recv = 0;
+
+      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
+      {
+        f0_recv |= JETSON_SERIAL.read() << j;
+        f1_recv |= JETSON_SERIAL.read() << j;
+      }
+
+      generate_chirp(f0_recv, f1_recv);
     }
   }
 #endif

@@ -12,6 +12,8 @@ echo:
         - "0EAA11575351523450202020FF113038"
         - "B2423AC95351523450202020FF0E0F43"
         - "C896BF835351523450202020FF0E440D"
+        - "5CD17E845351523450202020FF103D1B"
+        - "D6EFADF25351523450202020FF111436"
     
     f0: 120000
     f1: 10000
@@ -20,19 +22,19 @@ echo:
     
     num_adc_samples: 15000
 
-    sampling_period: 1.2E-6
+    sampling_period: 1.0E-6
     baud: 115200
     
     plot_settings:
         plot_interval: 1
         calibration_interval: 50
         y_amplitude_padding: 1000
-        y_spec_padding: 50000
+        y_spec_padding: 10000
         spec_color_map: 'jet'
     
     fft_settings:
-        NFFT: 256
-        noverlap: 100
+        NFFT: 512
+        noverlap: 400
 
 force:
     serial_number: "A597C94353544C324E202020FF18412B"

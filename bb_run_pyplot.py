@@ -45,6 +45,8 @@ if __name__ == '__main__':
     time_start = datetime.now()
     
     echo0_total, echo1_total = [],[]
+    
+    
 
     bb.send_sweep_freqs()
 
