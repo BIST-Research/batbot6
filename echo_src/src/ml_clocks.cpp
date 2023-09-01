@@ -78,7 +78,7 @@ void GCLK_init(void){
                                   GCLK_PCHCTRL_GEN_GCLK7;    // Route generic clock 1 to TCC0
 
   GCLK->PCHCTRL[DAC_GCLK_ID].reg = GCLK_PCHCTRL_CHEN |        // Enable the TCC0 perhipheral channel
-                                   GCLK_PCHCTRL_GEN_GCLK4;  
+                                  GCLK_PCHCTRL_GEN_GCLK4;  
 
 }
 

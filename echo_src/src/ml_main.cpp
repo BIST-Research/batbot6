@@ -12,10 +12,6 @@
 #include <header/ml_ac.hpp>
 #include <wiring_private.h>
 
-#ifndef N_ADC_SAMPLES
-#define N_ADC_SAMPLES 15000
-#endif
-
 #define JETSON_SERIAL Serial
 
 #define JOB_STATUS_LED_CHANNEL                   ML_TCC0_CH3
@@ -82,7 +78,7 @@ void emit_resonator_timer_init(void)
 
   TCC_channel_capture_compare_set(TCC0, JOB_STATUS_LED_CHANNEL, 15);
   peripheral_port_init(JOB_STATUS_LED_PMUX_MASK, JOB_STATUS_LED_PIN, OUTPUT_PULL_DOWN, DRIVE_ON);
-
+  
 }
 
 // 1Mhz sampling freq, chirp duration of 5E-3
@@ -90,23 +86,21 @@ void emit_resonator_timer_init(void)
 // PRESCALE = ADC_GCLK * SAMPLE_RATE /(res + 1 + samp)
 // PRESCALE = 120MHz * 1us/(12 + 1 + 2) = 8 -> ADC_CTRLA_PRESCALER_DIV8
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
-//const double conversion_period = 2E-6;
-//const double chirp_duration = 2E-3;
-#define CONVERSION_PERIOD (1E-6)
-#define CHIRP_DURATION (4E-3)
-const uint16_t num_samples = (uint16_t)(CHIRP_DURATION/CONVERSION_PERIOD);
+const int sample_freq = 400E3;
+const double chirp_duration = 2E-3;
+const uint16_t num_samples = 5000;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
-uint32_t generate_chirp(int f1, int f0)
+uint32_t generate_chirp(const int f0, const int f1)
 {
 
-  const double t1 = CHIRP_DURATION;
+  const double t1 = chirp_duration;
 
   const double phi = 0;
 
-  //const int f0 = 180E3;
-  //const int f1 = 20E3;
+  //const int f0 = 150E3;
+  //const int f1 = 60E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -126,6 +120,7 @@ uint32_t generate_chirp(int f1, int f0)
     // fill DMA buffer 
     chirp_out_buffer[i] = (uint16_t)((4096/2) * (1 + chirp * window));
   }
+  chirp_out_buffer[4095] = 0;
   return (uint32_t)&chirp_out_buffer[0] + num_samples * sizeof(uint16_t);
 }
 
@@ -148,7 +143,7 @@ static volatile DmacDescriptor wb_descriptor[3] __attribute__((aligned(16)));
 
 const uint32_t chirp_out_dmac_channel_settings = DMAC_CHCTRLA_BURSTLEN_SINGLE | //check when testing evsys
                                                  DMAC_CHCTRLA_TRIGACT_BURST |
-                                                 DMAC_CHCTRLA_TRIGSRC(TC3_DMAC_ID_OVF);
+                                                 DMAC_CHCTRLA_TRIGSRC(DAC_DMAC_ID_EMPTY_0);
 
 const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
                                            //         DMAC_BTCTRL_EVOSEL_BURST | //check when testing evsys
@@ -280,22 +275,6 @@ void state_timer_init(void)
 
 }
 
-void dac_sample_timer_init(void)
-{
-
-  GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK1;
-
-  TC3->COUNT16.WAVE.reg = TC_WAVE_WAVEGEN_MFRQ;
-  TC3->COUNT16.CC[0].reg = 98;
-  while(TC3->COUNT16.SYNCBUSY.bit.CC0);
-
-  TC3->COUNT16.CTRLA.bit.ENABLE=1;
-  while(TC3->COUNT16.SYNCBUSY.bit.ENABLE);
-
-  peripheral_port_init(PORT_PMUX_PMUXE(PF_E), 7, OUTPUT_PULL_DOWN, DRIVE_ON);
-
-}
-
 /*
  *
  * The below function allows us to hook up a debounced button
@@ -354,7 +333,6 @@ void hardware_int_trigger_init(void)
 
 #define DAC_DMAC_CHANNEL 0x02
 
-// T_conv = RESOLUTION * 2 * T_GCLK = 12 * 2 * (1/12MHz) = 2us
 void dac_init(void)
 {
   // Disable DAC
@@ -398,7 +376,7 @@ void dac_init(void)
   );
 }
 
-//const uint16_t num_adc_samples = 15000;
+const uint16_t num_adc_samples = 15000;
 
 #define PASTE_FUSE(REG) ((*((uint32_t *) (REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
@@ -423,7 +401,7 @@ const uint16_t adc0_dmac_descriptor_settings =
 
 #define ADC0_DMAC_CHANNEL 0x00
 
-uint16_t adc0_samples[N_ADC_SAMPLES];
+uint16_t adc0_samples[num_adc_samples];
 
 
 void adc0_init(void)
@@ -440,9 +418,9 @@ void adc0_init(void)
   DMAC_descriptor_init
   (
     adc0_dmac_descriptor_settings,
-    N_ADC_SAMPLES,
+    num_adc_samples,
     (uint32_t)&ADC0->RESULT.reg,
-    (uint32_t)adc0_samples + sizeof(uint16_t) * N_ADC_SAMPLES,
+    (uint32_t)adc0_samples + sizeof(uint16_t) * num_adc_samples,
     (uint32_t)&base_descriptor[ADC0_DMAC_CHANNEL],
     &base_descriptor[ADC0_DMAC_CHANNEL]
   );
@@ -507,7 +485,7 @@ const uint16_t adc1_dmac_descriptor_settings =
 
 #define ADC1_DMAC_CHANNEL 0x01
 
-uint16_t adc1_samples[N_ADC_SAMPLES];
+uint16_t adc1_samples[num_adc_samples];
 
 void adc1_init(void)
 {
@@ -523,9 +501,9 @@ void adc1_init(void)
   DMAC_descriptor_init
   (
     adc1_dmac_descriptor_settings,
-    N_ADC_SAMPLES,
+    num_adc_samples,
     (uint32_t)&ADC1->RESULT.reg,
-    (uint32_t)adc1_samples + sizeof(uint16_t) * N_ADC_SAMPLES,
+    (uint32_t)adc1_samples + sizeof(uint16_t) * num_adc_samples,
     (uint32_t)&base_descriptor[ADC1_DMAC_CHANNEL],
     &base_descriptor[ADC1_DMAC_CHANNEL]
   );
@@ -581,19 +559,40 @@ void setup(void)
 {
 
 //#ifndef MODE_HARD_TRIG
-  //JETSON_SERIAL.begin(115200);
-  //while(!Serial);
+  JETSON_SERIAL.begin(115200);
+  while(!Serial);
 
 //#endif
   int f0 = 150E3;
   int f1 = 60E3;
 
+  if(JETSON_SERIAL.available())
+  {
+    host_command opcode = (host_command) JETSON_SERIAL.read();
+
+    if(opcode == GET_RUN_INFO)
+    {
+      int f0_recv = 0;
+      int f1_recv = 0;
+
+      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
+      {
+        f0_recv |= JETSON_SERIAL.read() << j;
+        f1_recv |= JETSON_SERIAL.read() << j;
+      }
+
+      f0 = f0_recv;
+      f1 = f1_recv;
+    }
+  }
+
+  f0 = 150E3;
+  f1 = 10E3;
+
   chirp_out_source_address = generate_chirp(f0, f1);
 
   MCLK_init();
   GCLK_init();
-
-  dac_sample_timer_init();
 
   amp_disable();
 
@@ -737,19 +736,30 @@ void loop(void)
 
         adc0_done_intflag = adc1_done_intflag = false;
 
-        uint16_t chunk_size = 2*N_ADC_SAMPLES/8;
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc0_samples[0]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-        uint8_t *chunk_ptr0 = reinterpret_cast<uint8_t *>(&adc0_samples[0]);
-        for(uint16_t i=0; i < 8; i++, chunk_ptr0 += chunk_size)
-        {
-          JETSON_SERIAL.write(chunk_ptr0, sizeof(uint8_t) * chunk_size);
-        }
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc0_samples[num_adc_samples/2 - 1]),
+          sizeof(uint8_t) * num_adc_samples
+        );
 
-        uint8_t *chunk_ptr1 = reinterpret_cast<uint8_t *>(&adc1_samples[0]);
-        for(uint16_t i=0; i < 8; i++, chunk_ptr1 += chunk_size)
-        {
-          JETSON_SERIAL.write(chunk_ptr1, sizeof(uint8_t) * chunk_size);
-        }
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc1_samples[0]),
+          sizeof(uint8_t) * num_adc_samples
+        );
+
+        JETSON_SERIAL.write
+        (
+          reinterpret_cast<uint8_t *>(&adc1_samples[num_adc_samples/2 - 1]),
+          sizeof(uint8_t) * num_adc_samples
+        );
+
         //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
         //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
 
@@ -772,6 +782,7 @@ void loop(void)
 
     if(opcode <= START_JOB)
     {
+
       if(dstate == IDLE && opcode == START_JOB)
       {
         emit_start_intflag = true;
@@ -779,6 +790,7 @@ void loop(void)
         job_led_toggle();
       }
     }
+
     else if(opcode == AMP_STOP)
     {
       amp_disable();
@@ -787,20 +799,6 @@ void loop(void)
     else if(opcode == AMP_START)
     {
       amp_enable();
-    }
-    else if(opcode == GET_RUN_INFO)
-    {
-
-      int f0_recv = 0;
-      int f1_recv = 0;
-
-      for(int8_t j = (32 - 8) ; j >= 0; j -= 8)
-      {
-        f0_recv |= JETSON_SERIAL.read() << j;
-        f1_recv |= JETSON_SERIAL.read() << j;
-      }
-
-      generate_chirp(f1_recv, f0_recv);
     }
   }
 #endif

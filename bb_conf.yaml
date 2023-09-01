@@ -18,7 +18,7 @@ echo:
     
     spec_color_map: 'jet'
     
-    num_adc_samples: 16000
+    num_adc_samples: 15000
 
     sampling_period: 1.2E-6
     baud: 115200
