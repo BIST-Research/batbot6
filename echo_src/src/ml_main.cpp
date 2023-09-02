@@ -87,8 +87,8 @@ void emit_resonator_timer_init(void)
 // PRESCALE = 120MHz * 1us/(12 + 1 + 2) = 8 -> ADC_CTRLA_PRESCALER_DIV8
 // NUM_SAMPLES = 1Mhz * 5ms = 5000 samples
 const int sample_freq = 400E3;
-const double chirp_duration = 2E-3;
-const uint16_t num_samples = 4096;   //Changed for serial output
+const double chirp_duration = 4E-3;
+const uint16_t num_samples = 2000;   //Changed for serial output
 
 static uint16_t chirp_out_buffer[num_samples];
 
@@ -100,7 +100,7 @@ uint32_t generate_chirp(const int f0, const int f1)
   const double phi = 0;
 
   //const int f0 = 150E3;
-  //const int f1 = 60E3;
+  //const int f1 = 20E3;
 
   const double k = (f1 - f0) / t1;
 
@@ -143,6 +143,7 @@ static volatile DmacDescriptor wb_descriptor[3] __attribute__((aligned(16)));
 
 const uint32_t chirp_out_dmac_channel_settings = DMAC_CHCTRLA_BURSTLEN_SINGLE | //check when testing evsys
                                                  DMAC_CHCTRLA_TRIGACT_BURST |
+                                                 //DMAC_CHCTRLA_TRIGSRC(DAC_DMAC_ID_EMPTY_0);
                                                  DMAC_CHCTRLA_TRIGSRC(TC3_DMAC_ID_OVF);
 
 const uint16_t chirp_out_dmac_descriptor_settings = DMAC_BTCTRL_VALID |
@@ -210,14 +211,14 @@ void dac_sample_timer_init(void)
 
   TC3->COUNT8.CTRLA.reg = 
   (
-    TC_CTRLA_MODE_COUNT8 |
+    TC_CTRLA_MODE_COUNT16 |
     TC_CTRLA_PRESCSYNC_PRESC |
     TC_CTRLA_PRESCALER_DIV1 
   );
 
   TC3->COUNT8.WAVE.reg = TC_WAVE_WAVEGEN_MFRQ;
   //TC3->COUNT8.PER.reg = TC_COUNT8_PER_PER(48);
-  TC3->COUNT8.CC[0].reg = 5;
+  TC3->COUNT8.CC[0].reg = 30;
 
   while(TC3->COUNT8.SYNCBUSY.bit.CC0);
 
@@ -227,7 +228,6 @@ void dac_sample_timer_init(void)
   peripheral_port_init(PORT_PMUX_PMUXE(PF_E), 7, OUTPUT_PULL_DOWN, DRIVE_ON);
 
 }
-
 
 void wait_timer_init(void)
 {
@@ -376,7 +376,7 @@ void dac_init(void)
   DAC->CTRLB.reg = DAC_CTRLB_REFSEL_VDDANA;
   while (DAC->SYNCBUSY.bit.ENABLE || DAC->SYNCBUSY.bit.SWRST);
 
-  DAC->DACCTRL[0].reg |= DAC_DACCTRL_CCTRL_CC12M;
+  DAC->DACCTRL[0].reg |= DAC_DACCTRL_CCTRL_CC1M;
 
   const uint32_t dac_pin = g_APinDescription[A0].ulPin;
   const EPortType dac_port_grp = g_APinDescription[A0].ulPort;
@@ -408,7 +408,7 @@ void dac_init(void)
   );
 }
 
-const uint16_t num_adc_samples = 15000;
+const uint16_t num_adc_samples = 30000;
 
 #define PASTE_FUSE(REG) ((*((uint32_t *) (REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
@@ -595,12 +595,10 @@ void setup(void)
   //while(!Serial);
 
 //#endif
-
-  int f0 = 100E3;
-  int f1 = 20E3;
+  int f0 = 150E3;
+  int f1 = 10E3;
 
   chirp_out_source_address = generate_chirp(f0, f1);
-
 
   MCLK_init();
   GCLK_init();
@@ -621,6 +619,7 @@ void setup(void)
   dac_init();
 
   wait_timer_init();
+
   dac_sample_timer_init();
 
   job_led_toggle();
@@ -670,6 +669,8 @@ void setup(void)
   ML_DMAC_CHANNEL_SUSPEND(ADC1_DMAC_CHANNEL);
 
 }
+
+#define N_ADC_SAMPLES 30000
 
 boolean emit_start_intflag = false;
 boolean emit_stop_intflag = false;
@@ -748,29 +749,19 @@ void loop(void)
 
         adc0_done_intflag = adc1_done_intflag = false;
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc0_samples[0]),
-          sizeof(uint8_t) * num_adc_samples
-        );
+        uint16_t chunk_size = 2*N_ADC_SAMPLES/8;
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc0_samples[num_adc_samples/2 - 1]),
-          sizeof(uint8_t) * num_adc_samples
-        );
+        uint8_t *chunk_ptr0 = reinterpret_cast<uint8_t *>(&adc0_samples[0]);
+        for(uint16_t i=0; i < 8; i++, chunk_ptr0 += chunk_size)
+        {
+          JETSON_SERIAL.write(chunk_ptr0, sizeof(uint8_t) * chunk_size);
+        }
 
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc1_samples[0]),
-          sizeof(uint8_t) * num_adc_samples
-        );
-
-        JETSON_SERIAL.write
-        (
-          reinterpret_cast<uint8_t *>(&adc1_samples[num_adc_samples/2 - 1]),
-          sizeof(uint8_t) * num_adc_samples
-        );
+        uint8_t *chunk_ptr1 = reinterpret_cast<uint8_t *>(&adc1_samples[0]);
+        for(uint16_t i=0; i < 8; i++, chunk_ptr1 += chunk_size)
+        {
+          JETSON_SERIAL.write(chunk_ptr1, sizeof(uint8_t) * chunk_size);
+        }
 
         //TC2->COUNT16.CTRLBSET.reg |= TC_CTRLBSET_CMD_RETRIGGER;
         //while(TC2->COUNT16.SYNCBUSY.bit.CTRLB);
